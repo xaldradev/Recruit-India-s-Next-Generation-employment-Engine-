@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import Header from './components/Header';
 import MarqueeTicker from './components/MarqueeTicker';
 import PostingDetail from './components/PostingDetail';
@@ -19,10 +20,11 @@ import NavigationHub from './components/NavigationHub';
 import Smooth3DShowcase from './components/Smooth3DShowcase';
 import Interactive3DOrbit from './components/Interactive3DOrbit';
 import NotificationToast from './components/NotificationToast';
+import Entry3DWelcome from './components/Entry3DWelcome';
 
 import { initialPostings } from './data/initialData';
 import { Posting, Application, CategoryType } from './types';
-import { Award, CheckCircle, Landmark, Bell, ArrowUpRight, ShieldCheck, Sparkles, Bot, GraduationCap, Briefcase, ChevronRight, Mic, MicOff, ArrowLeft, Home, Compass, Map, RotateCcw, Star, Users, MapPin, RefreshCw, Quote, Plus, MessageSquare } from 'lucide-react';
+import { Award, Crown, CheckCircle, Landmark, Bell, ArrowUpRight, ShieldCheck, Sparkles, Bot, GraduationCap, Briefcase, ChevronRight, Mic, MicOff, ArrowLeft, Home, Compass, Map, RotateCcw, Star, Users, MapPin, RefreshCw, Quote, Plus, MessageSquare } from 'lucide-react';
 
 const INITIAL_MOCK_APPLICATIONS: Application[] = [
   {
@@ -142,6 +144,12 @@ const INITIAL_REVIEWS: Review[] = [
 ];
 
 export default function App() {
+  const [showWelcome, setShowWelcome] = useState(() => {
+    return localStorage.getItem('recruit_welcome_v3') !== 'true';
+  });
+  const [userName, setUserName] = useState(() => {
+    return localStorage.getItem('recruit_user_name') || 'Honored Guest';
+  });
   const [activeTab, setActiveTab] = useState('home');
   const [prevTab, setPrevTab] = useState('home');
   const currentTabRef = useRef('home');
@@ -562,10 +570,20 @@ export default function App() {
             {/* Left side info */}
             <div className="lg:col-span-7 space-y-7 text-left">
               
-              {/* Pulsing AI Online badge */}
-              <div className="inline-flex items-center gap-2 bg-[#16122e] border border-[#3c2a82]/60 text-[#a594fd] px-4 py-1.5 rounded-full text-xs font-semibold tracking-wide shadow-sm w-fit">
-                <span className="w-2 h-2 rounded-full bg-[#00e676] animate-pulse"></span>
-                <span>AROHI is Live — Online Now</span>
+              {/* Pulsing AI Online badge & Interactive 3D Welcome Re-trigger */}
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="inline-flex items-center gap-2 bg-[#16122e] border border-[#3c2a82]/60 text-[#a594fd] px-4 py-1.5 rounded-full text-xs font-semibold tracking-wide shadow-sm w-fit">
+                  <span className="w-2 h-2 rounded-full bg-[#00e676] animate-pulse"></span>
+                  <span>AROHI is Live — Online Now</span>
+                </div>
+                
+                <button
+                  onClick={() => setShowWelcome(true)}
+                  className="inline-flex items-center gap-1.5 bg-gradient-to-r from-[#ffd700]/10 to-[#ffd700]/20 hover:from-[#ffd700]/20 hover:to-[#ffd700]/30 text-[#ffd700] border border-[#ffd700]/30 hover:border-[#ffd700]/50 px-3.5 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer shadow-sm active:scale-95 duration-200"
+                >
+                  <Crown className="w-3.5 h-3.5 text-yellow-400" />
+                  <span>3D Portal Experience</span>
+                </button>
               </div>
               
               {/* Exact screenshot headings */}
@@ -1910,6 +1928,18 @@ export default function App() {
   return (
     <div className="bg-[#090714] min-h-screen flex flex-col font-sans antialiased text-slate-100 selection:bg-purple-500 selection:text-white pb-12">
       
+      {/* 0. Entry 3D Onboarding Welcome Overlay */}
+      <AnimatePresence mode="wait">
+        {showWelcome && (
+          <Entry3DWelcome
+            onClose={(name) => {
+              setUserName(name);
+              setShowWelcome(false);
+            }}
+          />
+        )}
+      </AnimatePresence>
+
       {/* 1. Brand Header */}
       <Header
         activeTab={activeTab}
