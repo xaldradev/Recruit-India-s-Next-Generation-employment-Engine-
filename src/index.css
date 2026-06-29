@@ -145,3 +145,48 @@
   animation: float-y 6s ease-in-out infinite;
 }
 
+/* Print optimizations */
+@media print {
+  /* Reset the canvas background to white for paper printing */
+  body, html, #root {
+    background: #ffffff !important;
+    color: #0f172a !important;
+  }
+  
+  /* Hide non-printable app containers (navigation header, footer, tickers, sidebars) */
+  header, footer, nav, aside, button, .print\:hidden, [role="banner"], .no-print, #print-posting-btn {
+    display: none !important;
+  }
+
+  /* Expand main containers to use the entire printable page width */
+  main, .max-w-6xl, .max-w-7xl, .mx-auto {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  /* Keep the primary posting container clean and clear */
+  .bg-slate-50 {
+    background-color: #f8fafc !important;
+  }
+
+  .bg-white {
+    background-color: #ffffff !important;
+    box-shadow: none !important;
+  }
+
+  /* Prevent page-breaks inside crucial tables & sections */
+  tr, table, blockquote, .gov-table {
+    page-break-inside: avoid !important;
+  }
+
+  /* Force print background graphics & text contrast */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}
+

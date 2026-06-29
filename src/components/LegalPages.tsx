@@ -19,12 +19,16 @@ import {
 } from 'lucide-react';
 
 interface LegalPagesProps {
-  initialTab: 'privacy' | 'terms' | 'refunds' | 'payments' | 'contact';
+  initialTab: 'privacy' | 'terms' | 'refunds' | 'payments' | 'contact' | 'faqs';
 }
 
 export default function LegalPages({ initialTab }: LegalPagesProps) {
-  const [activeSubTab, setActiveSubTab] = useState<'privacy' | 'terms' | 'refunds' | 'payments' | 'contact'>(initialTab);
+  const [activeSubTab, setActiveSubTab] = useState<'privacy' | 'terms' | 'refunds' | 'payments' | 'contact' | 'faqs'>(initialTab);
   
+  // FAQ Section States
+  const [selectedFaqCategory, setSelectedFaqCategory] = useState<string>('All');
+  const [expandedQuestion, setExpandedQuestion] = useState<string | null>(null);
+
   // Contact Form State
   const [contactName, setContactName] = useState('');
   const [contactEmail, setContactEmail] = useState('');
@@ -38,6 +42,43 @@ export default function LegalPages({ initialTab }: LegalPagesProps) {
   React.useEffect(() => {
     setActiveSubTab(initialTab);
   }, [initialTab]);
+
+  const faqs = [
+    {
+      category: 'Application Status',
+      q: 'How can I check the status of my recruitment application?',
+      a: 'You can check your current application status by logging into your Dashboard panel. Once logged in, go to the "My Applications" section where real-time progress will be displayed as "Submitted", "Under Review", "Approved", or "Rejected". You will also receive an automated email alert whenever an administrator updates your status.'
+    },
+    {
+      category: 'Application Status',
+      q: 'What is the processing turnaround time (TAT) for submitted forms?',
+      a: 'The administrative verification process usually takes between 3 to 7 working days. During peak exam announcements, this may take up to 10 days. If your profile remains under review beyond 10 days, please contact the Support Desk with your application registration number.'
+    },
+    {
+      category: 'Payment Methods',
+      q: 'Which payment methods are supported on the platform?',
+      a: 'We support 100% secure end-to-end payment methods compliant with Reserve Bank of India (RBI) rules. This includes Unified Payments Interface (UPI) (via PhonePe, Google Pay, Paytm, etc.), Debit/Credit Cards (Visa, MasterCard, RuPay), and secure Net Banking across all major commercial banks inside India.'
+    },
+    {
+      category: 'Payment Methods',
+      q: 'What if my payment fails but the money is deducted from my bank account?',
+      a: 'In compliance with standard banking settlement rules, failed transactions are automatically reconciled within 2 to 5 working days. If the money was debited but the registration was not successful, the amount will be fully credited back to your original source payment account. You can submit a ticket under "Payment Gateway Dispute" if the credit does not reflect after 5 working days.'
+    },
+    {
+      category: 'Account Recovery',
+      q: 'How do I recover my account if I forget my login password or registration number?',
+      a: 'To recover your credentials, click the "Forgot Password" link on the login page, or utilize our AI Assistant Arohi to initialize verification. You will be prompted to enter your registered email address or mobile number. A secure password reset link or dynamic OTP will be dispatched to verify your identity. Alternatively, you can search your email inbox for "Recruit.org.in Confirmation" to retrieve your unique Application Registration Number.'
+    },
+    {
+      category: 'Account Recovery',
+      q: 'Can I change my registered email address or phone number after signup?',
+      a: 'For security reasons, users cannot change their primary email ID or phone number directly from the settings panel. If you have lost access to your primary email/phone, please send a signed request letter or submit a grievance ticket under the "Grievance or Regulatory Complaint" category along with a valid Indian Government-issued identity proof (e.g. Aadhaar or PAN card) for identity verification.'
+    }
+  ];
+
+  const filteredFaqs = selectedFaqCategory === 'All' 
+    ? faqs 
+    : faqs.filter(faq => faq.category === selectedFaqCategory);
 
   const handleContactSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,6 +99,7 @@ export default function LegalPages({ initialTab }: LegalPagesProps) {
   };
 
   const legalTabs = [
+    { id: 'faqs', label: 'Frequently Asked Questions', icon: HelpCircle },
     { id: 'privacy', label: 'Privacy Policy', icon: Shield },
     { id: 'terms', label: 'Terms & Conditions', icon: FileText },
     { id: 'refunds', label: 'Refund & Cancellation', icon: RefreshCw },
@@ -113,6 +155,96 @@ export default function LegalPages({ initialTab }: LegalPagesProps) {
         {/* Dynamic Content Pane */}
         <div className="lg:col-span-9 bg-[#120d2a] rounded-3xl border border-[#211b3d] p-6 md:p-8 min-h-[500px] shadow-xl relative overflow-hidden">
           
+          {/* FAQ SECTION */}
+          {activeSubTab === 'faqs' && (
+            <div className="space-y-6 animate-in fade-in duration-300">
+              <div className="flex items-center gap-3 border-b border-[#211b3d] pb-4">
+                <HelpCircle className="w-6 h-6 text-[#7c3aed]" />
+                <h2 className="text-lg font-black text-white">Frequently Asked Questions</h2>
+              </div>
+              <p className="text-xs text-slate-400 font-medium">
+                Got questions? We have answers. Find resources below addressing application statuses, payment modes, and profile recovery procedures.
+              </p>
+
+              {/* Category Quick Filters */}
+              <div className="flex flex-wrap gap-2 pb-2">
+                {['All', 'Application Status', 'Payment Methods', 'Account Recovery'].map((cat) => (
+                  <button
+                    key={cat}
+                    onClick={() => {
+                      setSelectedFaqCategory(cat);
+                      setExpandedQuestion(null);
+                    }}
+                    className={`px-3 py-1.5 rounded-full text-[10px] font-black tracking-wider transition-all cursor-pointer border uppercase ${
+                      selectedFaqCategory === cat
+                        ? 'bg-[#7c3aed]/15 border-[#7c3aed] text-white'
+                        : 'bg-[#120d2a] border-[#211b3d] text-slate-400 hover:text-white hover:border-[#30275c]'
+                    }`}
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
+
+              {/* Accordion List */}
+              <div className="space-y-3">
+                {filteredFaqs.map((faq, idx) => {
+                  const isExpanded = expandedQuestion === faq.q;
+                  return (
+                    <div 
+                      key={idx}
+                      className={`border rounded-2xl transition-all duration-300 ${
+                        isExpanded 
+                          ? 'bg-[#161035] border-[#7c3aed]/40 shadow-[0_4px_20px_rgba(124,58,237,0.05)]' 
+                          : 'bg-[#130f2c] border-[#2b1f5c] hover:border-[#3e317c]'
+                      }`}
+                    >
+                      <button
+                        onClick={() => setExpandedQuestion(isExpanded ? null : faq.q)}
+                        className="w-full flex justify-between items-center px-4 py-3 text-left font-bold text-xs text-white gap-4 cursor-pointer focus:outline-none"
+                      >
+                        <span className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+                          <span className="text-[#8a70f5] text-[9px] font-black tracking-wider uppercase bg-[#8a70f5]/10 px-2 py-0.5 rounded shrink-0">
+                            {faq.category}
+                          </span>
+                          <span className="leading-snug">{faq.q}</span>
+                        </span>
+                        <span className={`text-[#8a70f5] shrink-0 text-[10px] transition-transform duration-300 transform ${isExpanded ? 'rotate-180' : ''}`}>
+                          ▼
+                        </span>
+                      </button>
+                      
+                      <div 
+                        className={`overflow-hidden transition-all duration-300 ease-in-out ${
+                          isExpanded ? 'max-h-60 border-t border-[#211b3d]' : 'max-h-0'
+                        }`}
+                      >
+                        <div className="p-4 text-xs text-slate-300 font-medium leading-relaxed bg-[#110c28]">
+                          {faq.a}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Can't find your question? Support CTA */}
+              <div className="bg-[#130f2c] border border-[#2b1f5c] p-5 rounded-2xl flex flex-col md:flex-row justify-between items-center gap-4 mt-8">
+                <div>
+                  <h4 className="text-xs font-black text-white uppercase tracking-wider">Still have unanswered questions?</h4>
+                  <p className="text-[10px] text-slate-400 mt-1 font-medium">Our regulatory helpdesk and technical team are ready to assist you 24/7.</p>
+                </div>
+                <button
+                  onClick={() => setActiveSubTab('contact')}
+                  className="bg-[#7c3aed] hover:bg-[#6d28d9] text-white font-black text-[10px] uppercase tracking-wider px-4 py-2 rounded-xl flex items-center gap-2 transition-all cursor-pointer active:scale-95 whitespace-nowrap"
+                >
+                  <span>Submit Support Ticket</span>
+                  <ArrowRight className="w-3 h-3" />
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* PRIVACY POLICY */}
           {activeSubTab === 'privacy' && (
             <div className="space-y-6 animate-in fade-in duration-300">
@@ -388,7 +520,7 @@ export default function LegalPages({ initialTab }: LegalPagesProps) {
                       <Phone className="w-4 h-4 text-[#00e676] shrink-0 mt-0.5" />
                       <div>
                         <span className="text-slate-400 font-bold block text-[10px]">Helpline Line</span>
-                        <span className="text-white font-black">+91 80-6922-8140</span>
+                        <span className="text-white font-black">+91-90904 55555</span>
                         <span className="text-[9px] text-slate-400 block mt-0.5">Mon to Sat (10:00 AM - 6:00 PM IST)</span>
                       </div>
                     </div>
@@ -398,7 +530,8 @@ export default function LegalPages({ initialTab }: LegalPagesProps) {
                       <div>
                         <span className="text-slate-400 font-bold block text-[10px]">Registered Address</span>
                         <span className="text-white leading-relaxed">
-                          Recruit Technologies Pvt. Ltd.<br />
+                          BRAGA TECHNOLOGIES PRIVATE LIMITED<br />
+                          (In association with ODITREE SERVICES)<br />
                           Level 4, Dynasty Plaza, Outer Ring Road,<br />
                           HSR Layout Sector 2, Bengaluru,<br />
                           Karnataka - 560102, India

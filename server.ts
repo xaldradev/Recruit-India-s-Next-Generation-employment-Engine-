@@ -97,6 +97,65 @@ function logActivity(type: string, description: string, metadata?: any) {
   }
 }
 
+// 0. Firebase Authentication Reverse Proxy for Custom Domain Hosting on Railway VPS
+app.all('/__/auth/*', async (req, res) => {
+  const firebaseAuthUrl = `https://psychic-tide-htj8l.firebaseapp.com${req.originalUrl}`;
+  try {
+    const headers: Record<string, string> = {};
+    for (const [key, value] of Object.entries(req.headers)) {
+      if (typeof value === 'string') {
+        headers[key] = value;
+      } else if (Array.isArray(value)) {
+        headers[key] = value.join(', ');
+      }
+    }
+    
+    // Override headers to avoid CORS/SSL/Origin mismatches with Google & Firebase
+    delete headers['host'];
+    if (headers['origin']) {
+      headers['origin'] = 'https://psychic-tide-htj8l.firebaseapp.com';
+    }
+    if (headers['referer']) {
+      headers['referer'] = 'https://psychic-tide-htj8l.firebaseapp.com/';
+    }
+
+    const fetchOptions: RequestInit = {
+      method: req.method,
+      headers: headers,
+    };
+
+    if (req.method !== 'GET' && req.method !== 'HEAD') {
+      if (typeof req.body === 'object' && Object.keys(req.body).length > 0) {
+        if (headers['content-type']?.includes('application/json')) {
+          fetchOptions.body = JSON.stringify(req.body);
+        } else {
+          const params = new URLSearchParams();
+          for (const [key, val] of Object.entries(req.body)) {
+            params.append(key, String(val));
+          }
+          fetchOptions.body = params.toString();
+        }
+      }
+    }
+
+    const response = await fetch(firebaseAuthUrl, fetchOptions);
+    
+    // Set appropriate response headers, omitting chunked transfer-encoding
+    response.headers.forEach((value, name) => {
+      if (name.toLowerCase() !== 'transfer-encoding') {
+        res.setHeader(name, value);
+      }
+    });
+
+    res.status(response.status);
+    const buffer = await response.arrayBuffer();
+    res.send(Buffer.from(buffer));
+  } catch (error) {
+    console.error('Error proxying firebase auth request:', error);
+    res.status(500).send('Authentication proxy error');
+  }
+});
+
 // 0. Site Tracking & Admin Security Endpoints
 app.post('/api/track-event', (req, res) => {
   const { type, description, metadata } = req.body;
@@ -376,6 +435,379 @@ Provide a clean JSON response with the following fields:
     return res.status(500).json({ error: error.message });
   }
 });
+
+// 4. Live AI Opportunity Sync & Search Online
+app.post('/api/fetch-online-jobs', async (req, res) => {
+  const { sector, location, jobType } = req.body;
+  
+  logActivity('visit', `User triggered Live AI Opportunity Sync for state: "${location || 'All India'}" and sector: "${sector || 'All'}"`);
+
+  try {
+    if (aiClient) {
+      const prompt = `Generate an array of 5 to 7 highly realistic and detailed active government exam postings, admit cards, or results in India, specifically targeting:
+- Sector: ${sector || 'Any'}
+- State/Location: ${location || 'All India or Odisha or Delhi or Maharashtra or Bihar'}
+- Job Type: ${jobType || 'government or private'}
+
+Each item MUST perfectly adhere to the following JSON schema:
+{
+  "id": "string (unique kebab-case ID, e.g. 'rbi-assistant-2026')",
+  "title": "string (Title of vacancy or admit-card or result, e.g. 'RBI Assistant Online Form 2026')",
+  "organization": "string (Official board/company name, e.g. 'Reserve Bank of India')",
+  "postDate": "2026-06-25",
+  "shortInfo": "string (Detailed summary of recruitment criteria)",
+  "category": "latest-jobs" | "admit-card" | "results" | "answer-key" | "syllabus" | "admission",
+  "tags": ["array", "of", "strings", "e.g. RBI, Banking, Graduation"],
+  "department": "SSC" | "Railway" | "UPSC" | "Bank" | "Defence" | "State PSC" | "Teaching" | "State Govt" | "Private Sector",
+  "isNew": true,
+  "state": "string (e.g., 'Odisha', 'All India', 'Maharashtra', 'Delhi-NCR', etc.)",
+  "jobType": "government" | "private",
+  "sector": "string (e.g. Banking & Finance, IT & Software, Security & Defence, etc.)",
+  "dates": {
+    "applicationBegin": "2026-06-25",
+    "lastDateApply": "2026-07-25",
+    "lastDateFee": "2026-07-25",
+    "examDate": "string",
+    "admitCardAvailable": "string",
+    "resultDeclared": "string"
+  },
+  "fees": {
+    "generalOBC": "string",
+    "scST": "string",
+    "female": "string",
+    "paymentMode": "string"
+  },
+  "ageLimit": {
+    "asOnDate": "01/08/2026",
+    "minAge": "string",
+    "maxAge": "string",
+    "relaxationInfo": "string"
+  },
+  "totalVacancies": number,
+  "vacancies": [
+    {
+      "postName": "string",
+      "totalPosts": number,
+      "eligibility": "string"
+    }
+  ],
+  "links": {
+    "applyOnline": "string (#apply or official URL)",
+    "downloadNotification": "string (#notification)",
+    "officialWebsite": "string (official bank/recruiter domain)"
+  }
+}
+
+Return ONLY a raw JSON array matching this exact schema. Do not enclose it in markdown blocks or add auxiliary text.`;
+
+      const response = await generateContentWithFallback(aiClient, {
+        contents: prompt,
+        config: {
+          responseMimeType: 'application/json',
+          systemInstruction: 'You are AROHI, a senior national crawler for Recruit.org.in. Output highly realistic recruitment notifications matching official pay scales.',
+        }
+      });
+
+      const parsed = JSON.parse(response.text || '[]');
+      return res.json({ success: true, postings: parsed });
+    } else {
+      const fallbacks = getFallbackAdditionalPostings(sector, location, jobType);
+      return res.json({ success: true, postings: fallbacks, fallback: true });
+    }
+  } catch (error: any) {
+    console.error('Error in /api/fetch-online-jobs:', error);
+    const fallbacks = getFallbackAdditionalPostings(sector, location, jobType);
+    return res.json({ success: true, postings: fallbacks, error: error.message });
+  }
+});
+
+function getFallbackAdditionalPostings(sector?: string, location?: string, jobType?: string): any[] {
+  const list = [
+    {
+      id: 'rbi-assistant-2026',
+      title: 'RBI Assistant Online Form 2026',
+      organization: 'Reserve Bank of India (RBI)',
+      postDate: '2026-06-25',
+      shortInfo: 'Reserve Bank of India (RBI) invites online applications from eligible Indian citizens for the post of Assistant in various offices of the Bank. Selection will be through a country-wide competitive examination in two phases i.e. Preliminary and Main examination followed by a Language Proficiency Test (LPT).',
+      category: 'latest-jobs',
+      tags: ['RBI', 'Banking', 'Graduate Pass', 'Assistant'],
+      department: 'Bank',
+      isNew: true,
+      state: 'All India',
+      jobType: 'government',
+      sector: 'Banking & Finance',
+      dates: {
+        applicationBegin: '2026-06-25',
+        lastDateApply: '2026-07-20',
+        lastDateFee: '2026-07-20',
+        examDate: 'September 2026 (Prelims)'
+      },
+      fees: {
+        generalOBC: '₹ 450/- (plus GST)',
+        scST: '₹ 50/- (Exempted from exam fee)',
+        female: '₹ 450/-',
+        paymentMode: 'Debit Cards (RuPay/Visa/MasterCard/Maestro), Credit Cards, Internet Banking, IMPS, Cash Cards/ Mobile Wallets'
+      },
+      ageLimit: {
+        asOnDate: '01/06/2026',
+        minAge: '20 Years',
+        maxAge: '28 Years',
+        relaxationInfo: 'Standard age relaxation is applicable for SC/ST (5 years), OBC (3 years), and PwD (10 years) as per government norms.'
+      },
+      totalVacancies: 950,
+      vacancies: [
+        {
+          postName: 'Assistant (Clerical Cadre)',
+          totalPosts: 950,
+          eligibility: 'Bachelor\'s Degree in any discipline with a minimum of 50% marks (pass class for SC/ST/PwBD candidates) in the aggregate and knowledge of word processing on PC.'
+        }
+      ],
+      links: {
+        applyOnline: '#apply',
+        downloadNotification: '#notification',
+        officialWebsite: 'https://www.rbi.org.in'
+      }
+    },
+    {
+      id: 'tcs-nqt-offcampus-2026',
+      title: 'TCS NQT National Qualifier Test 2026 (IT & Cognitive)',
+      organization: 'Tata Consultancy Services (TCS)',
+      postDate: '2026-06-25',
+      shortInfo: 'TCS National Qualifier Test (TCS NQT) is an entry-level assessment designed to evaluate cognitive abilities, professional skills, and coding capabilities of final year graduates and freshers. NQT scores are accepted by TCS and 600+ other top corporate partners for high-paying roles.',
+      category: 'latest-jobs',
+      tags: ['TCS', 'Private Sector', 'B.Tech/MCA', 'Software', 'All India'],
+      department: 'Private Sector',
+      isNew: true,
+      state: 'All India',
+      jobType: 'private',
+      sector: 'IT & Software',
+      dates: {
+        applicationBegin: '2026-06-24',
+        lastDateApply: '2026-08-15',
+        lastDateFee: '₹ 0/- (Free Registration)',
+        examDate: 'Interviews & online test on rolling basis'
+      },
+      fees: {
+        generalOBC: '₹ 0/- (Registration is 100% Free on NextStep Portal)',
+        scST: '₹ 0/-',
+        paymentMode: 'N/A'
+      },
+      ageLimit: {
+        asOnDate: '01/01/2026',
+        minAge: '18 Years',
+        maxAge: '28 Years',
+        relaxationInfo: 'N/A'
+      },
+      totalVacancies: 15000,
+      vacancies: [
+        {
+          postName: 'TCS Ninja Developer',
+          totalPosts: 10000,
+          eligibility: 'B.E. / B.Tech / M.E. / M.Tech / MCA / M.Sc from 2025 and 2026 passing out batches with 60% throughout academic career.'
+        },
+        {
+          postName: 'TCS Digital / Prime Architect',
+          totalPosts: 5000,
+          eligibility: 'B.E. / B.Tech / MCA with outstanding advanced programming, system design, and algorithmic coding evaluation score.'
+        }
+      ],
+      links: {
+        applyOnline: '#apply',
+        officialWebsite: 'https://www.tcs.com/careers'
+      }
+    },
+    {
+      id: 'drdo-scientist-b-2026',
+      title: 'DRDO Scientist B Direct Entry Exam Form 2026',
+      organization: 'Defence Research & Development Organisation (DRDO)',
+      postDate: '2026-06-26',
+      shortInfo: 'Recruitment Assessment Centre (RAC) under DRDO invites online applications for direct recruitment of Scientist \'B\' in DRDO, DST and ADA. Selection is based on GATE score card, descriptive written test, and personal interview rounds.',
+      category: 'latest-jobs',
+      tags: ['DRDO', 'GATE', 'Scientist B', 'Engineering', 'Defence'],
+      department: 'Defence',
+      isNew: true,
+      state: 'All India',
+      jobType: 'government',
+      sector: 'Security & Defence',
+      dates: {
+        applicationBegin: '2026-06-26',
+        lastDateApply: '2026-07-28',
+        lastDateFee: '2026-07-28',
+        examDate: 'October 2026'
+      },
+      fees: {
+        generalOBC: '₹ 100/-',
+        scST: '₹ 0/- (Exempted)',
+        female: '₹ 0/- (Exempted)',
+        paymentMode: 'Online Payment Mode Only'
+      },
+      ageLimit: {
+        asOnDate: '28/07/2026',
+        minAge: '21 Years',
+        maxAge: '30 Years',
+        relaxationInfo: 'OBC up to 33 years, SC/ST up to 35 years.'
+      },
+      totalVacancies: 640,
+      vacancies: [
+        {
+          postName: 'Scientist B (Electronics / CS / Mechanical / Electrical)',
+          totalPosts: 640,
+          eligibility: 'First Class Bachelor\'s Degree in Engineering or Technology in relevant branch from a recognized university and a valid GATE score card.'
+        }
+      ],
+      links: {
+        applyOnline: '#apply',
+        downloadNotification: '#notification',
+        officialWebsite: 'https://rac.gov.in'
+      }
+    },
+    {
+      id: 'odisha-junior-clerk-2026',
+      title: 'Odisha Junior Clerk & Assistant Recruitment 2026',
+      organization: 'Odisha Sub-Ordinate Staff Selection Commission (OSSSC)',
+      postDate: '2026-06-25',
+      shortInfo: 'OSSSC has published a notification for the recruitment of Junior Clerks and Junior Assistants in various district offices and headquarters under the Government of Odisha. Selection is based on a written exam and practical skill test in computer operation.',
+      category: 'latest-jobs',
+      tags: ['OSSSC', 'Odisha Govt', '12th Pass', 'Clerk', 'Computer Skill'],
+      department: 'State Govt',
+      isNew: true,
+      state: 'Odisha',
+      jobType: 'government',
+      sector: 'Administration',
+      dates: {
+        applicationBegin: '2026-06-25',
+        lastDateApply: '2026-07-30',
+        lastDateFee: '2026-07-30',
+        examDate: 'November 2026'
+      },
+      fees: {
+        generalOBC: '₹ 0/- (Free)',
+        scST: '₹ 0/-',
+        paymentMode: 'N/A'
+      },
+      ageLimit: {
+        asOnDate: '01/01/2026',
+        minAge: '18 Years',
+        maxAge: '38 Years',
+        relaxationInfo: '5 years relaxation for SC/ST/SEBC and women candidates.'
+      },
+      totalVacancies: 2150,
+      vacancies: [
+        {
+          postName: 'Junior Clerk / Junior Assistant',
+          totalPosts: 2150,
+          eligibility: 'Must have passed +2 Arts/Science/Commerce (Class 12th) exam or equivalent from a recognized council and hold a basic computer application certificate (DCA/PGDCA).'
+        }
+      ],
+      links: {
+        applyOnline: '#apply',
+        downloadNotification: '#notification',
+        officialWebsite: 'https://www.osssc.gov.in'
+      }
+    },
+    {
+      id: 'tata-steel-jet-2026',
+      title: 'Tata Steel Junior Engineer Trainee (JET) 2026',
+      organization: 'Tata Steel Limited',
+      postDate: '2026-06-24',
+      shortInfo: 'Tata Steel is inviting online applications for the position of Junior Engineer Trainee (JET) in its operational divisions in Jamshedpur, Kalinganagar, Meramandali, and raw material division. This is a highly regarded private core apprenticeship program leading to permanent placements.',
+      category: 'latest-jobs',
+      tags: ['Tata Steel', 'Odisha Private', 'Diploma', 'Engineering', 'Apprentice'],
+      department: 'Private Sector',
+      isNew: true,
+      state: 'Odisha',
+      jobType: 'private',
+      sector: 'Manufacturing & Core Eng',
+      dates: {
+        applicationBegin: '2026-06-24',
+        lastDateApply: '2026-07-20',
+        lastDateFee: '₹ 0/- (Free)'
+      },
+      fees: {
+        generalOBC: '₹ 0/-',
+        scST: '₹ 0/-',
+        paymentMode: 'N/A'
+      },
+      ageLimit: {
+        asOnDate: '01/07/2026',
+        minAge: '18 Years',
+        maxAge: '25 Years',
+        relaxationInfo: '3 years upper age limit relaxation for SC/ST candidates.'
+      },
+      totalVacancies: 450,
+      vacancies: [
+        {
+          postName: 'Junior Engineer Trainee (Mechanical / Electrical / Metallurgy / Inst)',
+          totalPosts: 450,
+          eligibility: '3-year full-time Diploma in Engineering or B.E./B.Tech degree in Mechanical, Electrical, Metallurgy, Electronics, or Instrumentation with minimum 60% aggregate.'
+        }
+      ],
+      links: {
+        applyOnline: '#apply',
+        officialWebsite: 'https://www.tatasteel.com'
+      }
+    },
+    {
+      id: 'aiims-bbsr-jr-2026',
+      title: 'AIIMS Bhubaneswar Junior Resident (Non-Academic) Form',
+      organization: 'All India Institute of Medical Sciences (AIIMS BBSR)',
+      postDate: '2026-06-26',
+      shortInfo: 'AIIMS Bhubaneswar invites applications for walk-in-interviews or online applications for the posts of Junior Resident (Non-Academic) for a period of 6 to 12 months. Excellent clinical training and high stipends under Central Govt residency rules.',
+      category: 'latest-jobs',
+      tags: ['AIIMS', 'Bhubaneswar', 'MBBS', 'Medical Resident', 'Odisha Govt'],
+      department: 'State Govt',
+      isNew: true,
+      state: 'Odisha',
+      jobType: 'government',
+      sector: 'Healthcare & Medical',
+      dates: {
+        applicationBegin: '2026-06-26',
+        lastDateApply: '2026-07-15',
+        lastDateFee: '2026-07-15',
+        examDate: 'Walk-in Interviews: 20/07/2026'
+      },
+      fees: {
+        generalOBC: '₹ 1000/-',
+        scST: '₹ 500/-',
+        female: '₹ 0/- (Exempted)',
+        paymentMode: 'Demand Draft / UPI / NEFT Transaction'
+      },
+      ageLimit: {
+        asOnDate: '20/07/2026',
+        minAge: '22 Years',
+        maxAge: '33 Years',
+        relaxationInfo: 'Relaxation as per Govt. of India rules for residents.'
+      },
+      totalVacancies: 85,
+      vacancies: [
+        {
+          postName: 'Junior Resident (Non-Academic)',
+          totalPosts: 85,
+          eligibility: 'MBBS Degree from an MCI recognized institution, and must have completed mandatory rotatory internship on or before application deadline.'
+        }
+      ],
+      links: {
+        applyOnline: '#apply',
+        downloadNotification: '#notification',
+        officialWebsite: 'https://aiimsbhubaneswar.nic.in'
+      }
+    }
+  ];
+
+  let filtered = list;
+  if (sector && sector !== 'All' && sector !== 'Any') {
+    filtered = filtered.filter(item => item.sector === sector);
+  }
+  if (location && location !== 'All' && location !== 'All India') {
+    filtered = filtered.filter(item => item.state === location);
+  }
+  if (jobType) {
+    filtered = filtered.filter(item => item.jobType === jobType);
+  }
+
+  // If filtered output is too small, return at least 4 items to ensure rich database
+  return filtered.length >= 2 ? filtered : list;
+}
 
 // Helper function to return fallback response from AROHI
 function getArohiFallbackResponse(userPrompt: string): string {

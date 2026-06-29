@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useAuth } from '../context/AuthContext';
 import { 
   Sparkles, 
   BookOpen, 
@@ -35,17 +36,26 @@ import {
   Trash2
 } from 'lucide-react';
 import { initialCourses, Course } from '../data/coursesData';
+import ArohiAvatar from './ArohiAvatar';
 
-// Interactive Lesson Content Generator for Auto-Learning Experience
+// Interactive Lesson Content Generator for Integrated Classroom Experience
 function getModuleContent(courseId: string, topicName: string, index: number) {
-  const defaultChecklist = [
-    "Read through core theoretical principles",
-    "Analyze real-world Indian industry case study",
-    "Complete hands-on sandbox practical exercise",
-    "Pass module micro-assessment quiz"
-  ];
+  // Base tech specific
+  const isTech = courseId.includes('js') || courseId.includes('react') || courseId.includes('flutter') || courseId.includes('python') || courseId.includes('aws') || courseId.includes('cyber') || courseId.includes('ai') || courseId.includes('cloud') || courseId.includes('sql');
+  const isBusiness = courseId.includes('finance') || courseId.includes('mudra') || courseId.includes('gst') || courseId.includes('retail') || courseId.includes('accounting') || courseId.includes('biz') || courseId.includes('management') || courseId.includes('sales');
 
-  const defaultQuiz = {
+  let overview = `Welcome to Unit ${index + 1}: ${topicName}. In this interactive module, we focus on modular structures, standard lifecycle guidelines, correct parameters, and compliance audits.`;
+  let keyPoints = [
+    "Understanding core concepts prevents rendering or system operation failures.",
+    "Always run sandbox tests in simulated staging workspaces before final sign-off.",
+    "Verify safety measures or structural parameters regularly."
+  ];
+  let checklist = [
+    "Setup workspace environment and review key definitions",
+    "Run practical simulated laboratory exercises",
+    "Complete module micro-assessment test"
+  ];
+  let quiz = {
     question: "What is the primary operational focus of this module?",
     options: [
       "Maximizing efficiency and compliance using industry-standard guidelines",
@@ -57,89 +67,276 @@ function getModuleContent(courseId: string, topicName: string, index: number) {
     explanation: "Standard industrial frameworks prioritize structural efficiency and compliance to scale operations safely."
   };
 
-  // Tech-specific content
-  if (courseId.includes('js') || courseId.includes('react') || courseId.includes('flutter') || courseId.includes('python')) {
-    return {
-      overview: `Welcome to Unit ${index + 1}: ${topicName}. In this interactive module, we focus on modular syntax, component lifecycle architectures, state binding protocols, and active security measures. Understanding these concepts is essential to building highly robust, scalable modern software layouts.`,
-      keyPoints: [
-        "Component hierarchy separation reduces duplicate rendering overhead.",
-        "Secure state variables must be encapsulated locally rather than exposed to global client states.",
-        "Continuous API connection testing prevents sudden visual rendering crashes."
-      ],
-      checklist: [
-        "Setup workspace environment and install core package dependencies",
-        "Write clean, type-safe modules with strict parameter validations",
-        "Configure active security headers and environment secrets",
-        "Test deployment hooks in a simulated staging sandbox"
-      ],
-      quiz: {
-        question: `Which of the following represents the safest methodology for managing private parameters in a ${topicName} environment?`,
+  // Tech Challenges
+  let techChallenge = {
+    instructions: `Write a clean TypeScript script or configuration block for "${topicName}". Complete the core module definition with parameters and export it properly.`,
+    starterCode: `// Active Workspace: ${topicName}\n// Task: Declare a constant name 'isApproved' as true.\n\nconst isApproved = false;\nexport { isApproved };`,
+    expectedKeywords: ["isApproved", "true"],
+    successMsg: `TypeScript modules for "${topicName}" compiled cleanly with zero warnings.`
+  };
+
+  // Business Tasks
+  let businessTask = {
+    instructions: `Balance your MSME account books for "${topicName}". Ensure your operating profit margins are sufficient to unlock collateral-free bank funding (minimum ₹50,000 profit required).`,
+    targetInflow: 120000,
+    targetProfit: 50000,
+    ledgerItemName: topicName
+  };
+
+  // Vocational Labs
+  let vocationalLab = {
+    instructions: `Safety check: Calibrate testing instruments for "${topicName}". Measure the ground-resistance using a Multimeter set to the Ω (Resistance) dial.`,
+    correctTool: 'multimeter',
+    correctNode: 'ground-resistance',
+    correctDial: 'resistance',
+    expectedVal: '0.18 Ohms (SAFE)',
+    okLogs: [
+      '[Auditing] Inspecting ground connection terminal rods...',
+      '[Reading] Multimeter probes connected securely.'
+    ]
+  };
+
+  // Customizing based on topics
+  if (isTech) {
+    overview = `Welcome to Unit ${index + 1}: ${topicName}. In this technical classroom lecture, we dissect modular syntax, component declarations, parameters handling, and security protocols. Mastering these guidelines is crucial to building robust, modern software systems.`;
+    keyPoints = [
+      "Modular components isolate layout failures and optimize render workloads.",
+      "Strict type assertions contract clean data structures without run-time crashes.",
+      "Hidden keys must be proxied via server-side APIs to prevent security exploits."
+    ];
+    checklist = [
+      "Verify code structure against standard TypeScript rules",
+      "Write actual component code inside the live coding sandbox",
+      "Pass the interactive compiler unit test assertions"
+    ];
+
+    // Specific tech challenges
+    if (topicName.toLowerCase().includes('html') || topicName.toLowerCase().includes('tailwind') || topicName.toLowerCase().includes('css')) {
+      techChallenge = {
+        instructions: `Complete the Tailwind CSS structural container layout. Set the display utility to flex and center-align the items with responsive padding of 6 units.`,
+        starterCode: `// Tailwind CSS Component Sandbox\nimport React from 'react';\n\nexport function CardContainer() {\n  return (\n    <div className="/* TODO: Add flex, items-center, p-6 */">\n      <h3 className="text-sm font-bold text-slate-100">Lab Title</h3>\n    </div>\n  );\n}`,
+        expectedKeywords: ["flex", "items-center", "p-6"],
+        successMsg: "Tailwind layout compiled! Alignment properties centered cleanly."
+      };
+      quiz = {
+        question: "Which Tailwind utility class applies a flexbox layout to an element?",
+        options: ["block", "grid", "flex", "inline-block"],
+        answerIdx: 2,
+        explanation: "The 'flex' utility class applies a flexible box layout model to center, align, and wrap items seamlessly."
+      };
+    } else if (topicName.toLowerCase().includes('typescript') || topicName.toLowerCase().includes('type')) {
+      techChallenge = {
+        instructions: `Define an interface contract named 'Candidate' with a read-only string parameter named 'id' and a string parameter named 'name'.`,
+        starterCode: `// TypeScript Interface Sandbox\n\n// TODO: Complete the Candidate interface below\ninterface Candidate {\n  readonly id: string;\n  name: string;\n}`,
+        expectedKeywords: ["readonly id", "name", "string"],
+        successMsg: "TypeScript compiler checked interface. Strict type safety validated!"
+      };
+      quiz = {
+        question: "What is the advantage of using 'readonly' keyword on a TypeScript property?",
         options: [
-          "Hardcoding keys in client-side script headers",
-          "Injecting secrets via server-side environment variables (.env)",
-          "Storing tokens openly in browser local storage",
-          "Leaving variables undefined until production runtime"
+          "It makes the property invisible to other components",
+          "It prevents reassignment after initial instantiation",
+          "It compiles the property to static HTML tags",
+          "It removes the variable entirely at run-time"
         ],
         answerIdx: 1,
-        explanation: "Server-side environment variables (.env) completely hide private keys from public client-side browser inspections."
-      }
-    };
-  }
-
-  // Business & MSME specific content
-  if (courseId.includes('finance') || courseId.includes('mudra') || courseId.includes('gst') || courseId.includes('retail')) {
-    return {
-      overview: `Welcome to Unit ${index + 1}: ${topicName}. This session covers micro-enterprise registration frameworks, banking audits, ledger balancing, and Indian tax compliance rules. Mastering these operational foundations prevents legal and financial bottlenecks in local startups.`,
-      keyPoints: [
-        "Udyam registration acts as the base gateway for claiming CGTMSE collateral-free bank loans.",
-        "GST filings require precise HSN classification to avoid sudden audit notices.",
-        "Maintaining a daily cashflow ledger ensures working capital survival."
-      ],
-      checklist: [
-        "Verify business eligibility against government MSME category boundaries",
-        "Compile three-year simulated cashflow projection project reports",
-        "Record mock accounts in the primary ledger system",
-        "Complete compliance checks with our live legal advisor checklist"
-      ],
-      quiz: {
-        question: "Under the PM Mudra Scheme, what is the maximum loan cap offered under the 'Tarun' category?",
+        explanation: "Properties flagged with 'readonly' can only be set during initialization and cannot be mutated afterwards, preserving pure structures."
+      };
+    } else if (topicName.toLowerCase().includes('react') || topicName.toLowerCase().includes('hook') || topicName.toLowerCase().includes('state')) {
+      techChallenge = {
+        instructions: `Declare a React state count variable and updater function named 'count' and 'setCount' using the useState hook, initializing it to 0.`,
+        starterCode: `// React State Hook Sandbox\nimport React, { useState } from 'react';\n\nexport function Clicker() {\n  // TODO: Declare 'count' and 'setCount' hook here\n  \n  return (\n    <p>Clicks: {count}</p>\n  );\n}`,
+        expectedKeywords: ["useState(0)", "count", "setCount"],
+        successMsg: "React hook compiled! Component re-renders are successfully optimized."
+      };
+      quiz = {
+        question: "What must you avoid to prevent infinite render loops inside React functional components?",
         options: [
-          "Up to ₹50,000 only",
-          "From ₹50,000 up to ₹5 Lakhs",
-          "From ₹5 Lakhs up to ₹10 Lakhs",
-          "No defined limit, based entirely on asset valuation"
+          "Calling useState updaters directly inside the component render body",
+          "Writing sub-functions inside the main component",
+          "Utilizing external libraries",
+          "Declaring helper variables above the export line"
         ],
+        answerIdx: 0,
+        explanation: "Updating state directly in the component body schedules another render immediately, leading to an infinite recursive loop."
+      };
+    } else if (topicName.toLowerCase().includes('express') || topicName.toLowerCase().includes('api') || topicName.toLowerCase().includes('route')) {
+      techChallenge = {
+        instructions: `Create an Express GET route handler on path '/api/health' that returns a JSON payload: { status: "ok" }.`,
+        starterCode: `// Express REST API Sandbox\nimport express from 'express';\nconst app = express();\n\n// TODO: Add app.get route for '/api/health' returning status ok\n`,
+        expectedKeywords: ["app.get", "'/api/health'", "res.json", "status:", "ok"],
+        successMsg: "Express route mounted! Port 3000 mapping is ready for telemetry checks."
+      };
+      quiz = {
+        question: "Which Express response method is preferred for returning data models to API clients?",
+        options: ["res.send()", "res.write()", "res.json()", "res.redirect()"],
         answerIdx: 2,
-        explanation: "The PM Mudra Scheme limits the 'Tarun' category to loans between ₹5 Lakhs and ₹10 Lakhs to support established small scale business expansion."
-      }
-    };
+        explanation: "res.json() automatically formats the passed models to JSON strings and sets the correct application/json headers."
+      };
+    } else {
+      techChallenge = {
+        instructions: `Write a standard export module returning a strict check value named 'systemOk' as true.`,
+        starterCode: `// General Software Sandbox\nexport function checkSystem() {\n  // TODO: Declare systemOk constant as true and return it\n  \n}`,
+        expectedKeywords: ["systemOk", "true", "return"],
+        successMsg: "Test completed successfully! Sandbox code compiles."
+      };
+    }
+  } else if (isBusiness) {
+    overview = `Welcome to Unit ${index + 1}: ${topicName}. This MSME vocational session covers trade registration portals, legal forms, commercial ledgers, cash flows, and GST audit filings. Mastering these financial foundations prevents operating bottlenecks in small local enterprises.`;
+    keyPoints = [
+      "Maintaining an accurate general ledger prevents tax penalties during government audits.",
+      "GST HSN classifications determine direct rate liability and input tax credit claims.",
+      "Collateral-free Mudra financing requires a viable, high debt-service coverage ratio."
+    ];
+    checklist = [
+      "Review official central portal registration requirements",
+      "Build a balanced operating ledger inside our MSME worksheet",
+      "Pass the business compliance micro-assessment quiz"
+    ];
+
+    if (topicName.toLowerCase().includes('udyam') || topicName.toLowerCase().includes('register')) {
+      businessTask = {
+        instructions: `Calculate the financial project plan for Udyam MSME eligibility. Input monthly revenues of at least ₹1,50,000 and operating costs under ₹1,00,000 to show positive credit standing.`,
+        targetInflow: 150000,
+        targetProfit: 50000,
+        ledgerItemName: "Udyam Licensing & Filing Fee"
+      };
+      quiz = {
+        question: "Which portal is the official, zero-fee gateway authorized by the Govt of India for MSME registration?",
+        options: ["Startup India Portal", "GST Common Portal", "Udyam Registration Portal", "Mudra Scheme Portal"],
+        answerIdx: 2,
+        explanation: "The Udyam Registration Portal is the free, completely online, paperless single-window gateway for MSME classification."
+      };
+    } else if (topicName.toLowerCase().includes('gst') || topicName.toLowerCase().includes('tax') || topicName.toLowerCase().includes('filing')) {
+      businessTask = {
+        instructions: `Estimate GST tax returns. Enter business turnover revenues of ₹2,50,000 and operating costs of ₹1,20,000 to determine 18% HSN filing compliance.`,
+        targetInflow: 250000,
+        targetProfit: 100000,
+        ledgerItemName: "HSN Code 18% Service Filings"
+      };
+      quiz = {
+        question: "What is the threshold exemption limit of annual turnover for GST registration for service providers in India?",
+        options: ["₹10 Lakhs", "₹20 Lakhs", "₹40 Lakhs", "₹75 Lakhs"],
+        answerIdx: 1,
+        explanation: "For service providers, GST registration is mandatory if annual aggregate turnover exceeds ₹20 Lakhs (₹10 Lakhs for special hill states)."
+      };
+    } else if (topicName.toLowerCase().includes('mudra') || topicName.toLowerCase().includes('loan') || topicName.toLowerCase().includes('cgtmse')) {
+      businessTask = {
+        instructions: `Test financial feasibility for Mudra credit approval. Input monthly inflow of ₹3,00,000 and costs of ₹1,80,000 (minimum profit target: ₹1,20,000) to ensure collateral-free approval.`,
+        targetInflow: 300000,
+        targetProfit: 120000,
+        ledgerItemName: "Mudra Loan Feasibility Ledger"
+      };
+      quiz = {
+        question: "Under the PM Mudra Scheme, what is the maximum loan limit available under the 'Kishor' category?",
+        options: ["Up to ₹50,000", "From ₹50,000 up to ₹5 Lakhs", "From ₹5 Lakhs up to ₹10 Lakhs", "Up to ₹20 Lakhs"],
+        answerIdx: 1,
+        explanation: "The Kishor category covers loans above ₹50,000 and up to ₹5 Lakhs to support small businesses that require starting capital."
+      };
+    } else {
+      businessTask = {
+        instructions: `Simulate cashflow. Put starting monthly revenue of ₹1,20,000 and expenses under ₹70,000 to generate compliance margin.`,
+        targetInflow: 120000,
+        targetProfit: 50000,
+        ledgerItemName: "Operating Cash Balance Sheet"
+      };
+    }
+  } else {
+    // Vocational & Trades
+    overview = `Welcome to Unit ${index + 1}: ${topicName}. This field lecture reviews wiring schematics, testing protocols, digital measurement tools, and personal protective guidelines. Safety is our absolute highest priority.`;
+    keyPoints = [
+      "Always shut down power grids and test ground resistances before conducting physical repairs.",
+      "Calibrate digital multimeter dials to correct settings to prevent equipment damage.",
+      "Maintain tidy field service logs to comply with ISO workshop guidelines."
+    ];
+    checklist = [
+      "Verify safety equipment, insulated gloves, and goggles are active",
+      "Perform wiring resistance telemetry scans in our Diagnostic schematic lab",
+      "Submit the unit safety and diagnostic micro-assessment quiz"
+    ];
+
+    if (topicName.toLowerCase().includes('solar') || topicName.toLowerCase().includes('photovoltaic') || topicName.toLowerCase().includes('inverter')) {
+      vocationalLab = {
+        instructions: `Solar Panel Calibration: Test the solar panel power inverter feedback line. Set your tool to Multimeter, choose the dial for Voltage, target 'inverter-controller', and run scan.`,
+        correctTool: 'multimeter',
+        correctNode: 'inverter-controller',
+        correctDial: 'voltage',
+        expectedVal: '230V AC (STABLE) - Sine Frequency: 50.0Hz',
+        okLogs: [
+          '[Inspecting] Solar photovoltaic arrays are clean and facing south.',
+          '[Reading] Inverter power output syncer is active.'
+        ]
+      };
+      quiz = {
+        question: "Which device is mandatory in solar grid installations to convert direct current (DC) to household alternating current (AC)?",
+        options: ["Step-down Transformer", "Power Inverter", "Digital Rheostat", "Thermal Fuse Controller"],
+        answerIdx: 1,
+        explanation: "Solar panels generate DC power, which must pass through a Power Inverter to convert it to standard utility AC power."
+      };
+    } else if (topicName.toLowerCase().includes('drone') || topicName.toLowerCase().includes('sensor') || topicName.toLowerCase().includes('calibration')) {
+      vocationalLab = {
+        instructions: `Drone Avionics Lab: Verify the gyroscope and accelerometer sensor nodes. Choose the Thermal Scanner tool, target 'sensor-array', dial set to Temperature, and scan.`,
+        correctTool: 'thermal',
+        correctNode: 'sensor-array',
+        correctDial: 'temperature',
+        expectedVal: '34.2 °C (NOMINAL) - Gyro scope axis: aligned',
+        okLogs: [
+          '[Calibrating] Booting drone flight controller firmware...',
+          '[Reading] Accelerometer telemetry stream syncer online.'
+        ]
+      };
+      quiz = {
+        question: "What is the primary function of an ESC (Electronic Speed Controller) in a quadcopter drone?",
+        options: [
+          "To transmit live video signals to the ground team",
+          "To regulate motor RPMs based on flight controller instructions",
+          "To measure wind speed and barometer pressure",
+          "To lock GPS coordinates before landing"
+        ],
+        answerIdx: 1,
+        explanation: "ESCs interpret flight controller signals to regulate individual motor speeds dynamically, maintaining stability."
+      };
+    } else if (topicName.toLowerCase().includes('battery') || topicName.toLowerCase().includes('ev') || topicName.toLowerCase().includes('circuit')) {
+      vocationalLab = {
+        instructions: `EV Battery Diagnostic: Conduct safety scan on Battery Cell Block #4. Use the Thermal Scanner, dial set to Temperature, target 'battery-cells', and run scan.`,
+        correctTool: 'thermal',
+        correctNode: 'battery-cells',
+        correctDial: 'temperature',
+        expectedVal: '28.5 °C (NOMINAL) - Cell balance: 3.75V',
+        okLogs: [
+          '[Safety Audit] Evacuating residual current discharges...',
+          '[Reading] High-resolution thermal scanner aligned.'
+        ]
+      };
+      quiz = {
+        question: "What failure state occurs when an EV lithium-ion battery cell overheats rapidly, triggering neighboring cells to ignite?",
+        options: ["Coulombic Leakage", "Thermal Runaway", "Ohmic Saturation", "Galvanic Corrosion"],
+        answerIdx: 1,
+        explanation: "Thermal Runaway is a high-temperature chain-reaction loop that can destroy battery packs if thermal dissipaters fail."
+      };
+    } else {
+      vocationalLab = {
+        instructions: `Standard Safety Audit: Test wire resistance on terminal ground nodes. Use the Multimeter set to the Resistance dial, target 'ground-resistance', and scan.`,
+        correctTool: 'multimeter',
+        correctNode: 'ground-resistance',
+        correctDial: 'resistance',
+        expectedVal: '0.14 Ohms (SAFE)',
+        okLogs: [
+          '[Auditing] Testing probe secured to ground terminal connector.',
+          '[Reading] Resistance readout established.'
+        ]
+      };
+    }
   }
 
-  // Vocational & hands-on trades content
   return {
-    overview: `Welcome to Unit ${index + 1}: ${topicName}. This module provides a clear, step-by-step practical guide to hardware testing, field wiring standards, diagnostic meters calibration, and safety protocols. Follow the guidelines closely.`,
-    keyPoints: [
-      "Always disconnect the primary power source and measure ground resistance before handling wires.",
-      "Calibrate testing equipment against known reference metrics to prevent diagnostic errors.",
-      "Keep detailed service logs for every physical asset audit."
-    ],
-    checklist: [
-      "Inspect safety equipment, insulated gloves, and goggles",
-      "Perform wire resistance audits using digital diagnostic meters",
-      "Calibrate controller inputs to prevent thermal overflows",
-      "Submit physical completion report inside our mock workshop database"
-    ],
-    quiz: {
-      question: "Which of the following tools is absolutely mandatory before performing high-voltage EV or grid wiring maintenance?",
-      options: [
-        "An uninsulated metallic screwdriver",
-        "An active digital multimeter and high-resistance insulated gloves",
-        "A standard wire brush and structural tape",
-        "No special tools are required for standard repairs"
-      ],
-      answerIdx: 1,
-      explanation: "Active digital multimeters verify zero live voltage, while insulated safety gloves protect technicians from unexpected spikes."
-    }
+    overview,
+    keyPoints,
+    checklist,
+    quiz,
+    techChallenge,
+    businessTask,
+    vocationalLab
   };
 }
 
@@ -229,6 +426,8 @@ function renderMarkdown(content: string) {
 }
 
 export default function CoursesPage() {
+  const { user, userData, updateCareerProgress } = useAuth();
+
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [showDashboard, setShowDashboard] = useState<boolean>(true);
   const [hoveredChartDay, setHoveredChartDay] = useState<number | null>(null);
@@ -236,6 +435,7 @@ export default function CoursesPage() {
     const saved = localStorage.getItem('recruit_enrolled_courses');
     return saved ? JSON.parse(saved) : [];
   });
+
 
   const [courses, setCourses] = useState<Course[]>(initialCourses);
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
@@ -263,7 +463,7 @@ export default function CoursesPage() {
     localStorage.removeItem('recruit_course_search_history');
   };
 
-  // Auto-Learning Engine State variables
+  // Integrated Classroom State variables
   const [activeLearningCourse, setActiveLearningCourse] = useState<Course | null>(null);
   const [activeModuleIndex, setActiveModuleIndex] = useState<number>(0);
   const [completedModules, setCompletedModules] = useState<Record<string, string[]>>(() => {
@@ -275,10 +475,29 @@ export default function CoursesPage() {
     return saved ? JSON.parse(saved) : {};
   });
 
-  const [isPlayingAutoStudy, setIsPlayingAutoStudy] = useState(false);
-  const [autoStudyTimer, setAutoStudyTimer] = useState<number>(0);
-  const [activeModuleProgress, setActiveModuleProgress] = useState<number>(0);
-  const [notifiedMilestones, setNotifiedMilestones] = useState<string[]>([]);
+  const [classroomTab, setClassroomTab] = useState<'lecture' | 'sandbox' | 'quiz'>('lecture');
+  
+  // Audio guidance overlay simulations
+  const [isAudioLecturePlaying, setIsAudioLecturePlaying] = useState<boolean>(false);
+  const [audioProgress, setAudioProgress] = useState<number>(0);
+
+  // Technical Sandbox Sandbox states
+  const [editorCode, setEditorCode] = useState<string>('');
+  const [consoleLogs, setConsoleLogs] = useState<string[]>([]);
+  const [techTaskPassed, setTechTaskPassed] = useState<boolean>(false);
+
+  // Business Sandbox states
+  const [bizName, setBizName] = useState<string>('Om MSME Enterprises');
+  const [bizInflow, setBizInflow] = useState<string>('240000');
+  const [bizOutflow, setBizOutflow] = useState<string>('115000');
+  const [bizTaxScheme, setBizTaxScheme] = useState<string>('GST-Composition');
+  const [bizLedgerResult, setBizLedgerResult] = useState<any>(null);
+
+  // Vocational Sandbox states
+  const [vocationalTool, setVocationalTool] = useState<string>('multimeter');
+  const [vocationalNode, setVocationalNode] = useState<string>('ground-resistance');
+  const [vocationalDials, setVocationalDials] = useState<string>('resistance');
+  const [vocationalConsole, setVocationalConsole] = useState<string[]>(['[System] Diagnostic hardware simulator online. Ready to scan hardware circuitry.']);
 
   // Quiz States
   const [selectedQuizOption, setSelectedQuizOption] = useState<number | null>(null);
@@ -294,6 +513,11 @@ export default function CoursesPage() {
   // Show customized Certificate of Completion
   const [showCertificateId, setShowCertificateId] = useState<string | null>(null);
 
+  // Scroll to top of window whenever a course is selected or the active learning player is loaded
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }, [selectedCourse, activeLearningCourse]);
+
   // Live AI Tutor Companion chat inside learning player
   const [tutorMessages, setTutorMessages] = useState<Array<{ id: string; sender: 'user' | 'tutor'; text: string }>>([]);
   const [tutorInput, setTutorInput] = useState('');
@@ -307,12 +531,26 @@ export default function CoursesPage() {
   const [wasAutoLaunched, setWasAutoLaunched] = useState<boolean>(false);
   const [isCoursesExpanded, setIsCoursesExpanded] = useState<boolean>(false);
 
+  // Synchronize with Firebase Firestore in real time if user is authenticated
+  useEffect(() => {
+    if (user && userData) {
+      if (userData.enrolledCourses) setEnrolledCourses(userData.enrolledCourses);
+      if (userData.completedModules) setCompletedModules(userData.completedModules);
+      if (userData.checkedChecklist) setCheckedChecklistItems(userData.checkedChecklist);
+      if (userData.earnedCertificates) setEarnedCertificates(userData.earnedCertificates);
+    }
+  }, [user, userData]);
+
   // Persist enrolled courses
   const handleEnroll = (courseId: string) => {
     if (!enrolledCourses.includes(courseId)) {
       const updated = [...enrolledCourses, courseId];
       setEnrolledCourses(updated);
-      localStorage.setItem('recruit_enrolled_courses', JSON.stringify(updated));
+      if (user) {
+        updateCareerProgress({ enrolledCourses: updated }).catch(err => console.error("Firebase enroll sync error:", err));
+      } else {
+        localStorage.setItem('recruit_enrolled_courses', JSON.stringify(updated));
+      }
     }
   };
 
@@ -344,12 +582,24 @@ export default function CoursesPage() {
           // Seamlessly switch directly to the active learning player!
           setActiveLearningCourse(course);
           setActiveModuleIndex(0);
-          setActiveModuleProgress(0);
           setSelectedQuizOption(null);
           setQuizSubmitted(false);
-          
-          // Creatively automatically enable Auto-Pilot Study Mode so the user witnesses active learning immediately!
-          setIsPlayingAutoStudy(true);
+          setClassroomTab('lecture');
+          setIsAudioLecturePlaying(false);
+          setAudioProgress(0);
+          setTechTaskPassed(false);
+
+          // Populate starter code if it is a tech course
+          const firstTopic = course.syllabus[0];
+          const content = getModuleContent(course.id, firstTopic, 0);
+          if (course.category === 'tech' && content.techChallenge) {
+            setEditorCode(content.techChallenge.starterCode);
+            setConsoleLogs(['[System] Compiler workspace loaded. Write code below and click Execute.']);
+          } else {
+            setEditorCode('');
+            setConsoleLogs([]);
+          }
+          setBizLedgerResult(null);
         }, 500);
       } else {
         setLaunchProgress(currentProg);
@@ -369,7 +619,11 @@ export default function CoursesPage() {
   const handleUnenroll = (courseId: string) => {
     const updated = enrolledCourses.filter(id => id !== courseId);
     setEnrolledCourses(updated);
-    localStorage.setItem('recruit_enrolled_courses', JSON.stringify(updated));
+    if (user) {
+      updateCareerProgress({ enrolledCourses: updated }).catch(err => console.error("Firebase unenroll sync error:", err));
+    } else {
+      localStorage.setItem('recruit_enrolled_courses', JSON.stringify(updated));
+    }
     
     // Cleanup active learning if unenrolling
     if (activeLearningCourse?.id === courseId) {
@@ -388,7 +642,11 @@ export default function CoursesPage() {
     }
     const newCompleted = { ...completedModules, [courseId]: updated };
     setCompletedModules(newCompleted);
-    localStorage.setItem('recruit_completed_modules', JSON.stringify(newCompleted));
+    if (user) {
+      updateCareerProgress({ completedModules: newCompleted }).catch(err => console.error("Firebase modules sync error:", err));
+    } else {
+      localStorage.setItem('recruit_completed_modules', JSON.stringify(newCompleted));
+    }
   };
 
   // Toggle a checklist item verified state
@@ -396,7 +654,11 @@ export default function CoursesPage() {
     const key = `${courseId}-${topicName}-${itemIdx}`;
     const updated = { ...checkedChecklistItems, [key]: !checkedChecklistItems[key] };
     setCheckedChecklistItems(updated);
-    localStorage.setItem('recruit_checked_checklist', JSON.stringify(updated));
+    if (user) {
+      updateCareerProgress({ checkedChecklist: updated }).catch(err => console.error("Firebase checklist sync error:", err));
+    } else {
+      localStorage.setItem('recruit_checked_checklist', JSON.stringify(updated));
+    }
   };
 
   // Claim a certificate if all modules are completed
@@ -404,7 +666,11 @@ export default function CoursesPage() {
     if (!earnedCertificates.includes(courseId)) {
       const updated = [...earnedCertificates, courseId];
       setEarnedCertificates(updated);
-      localStorage.setItem('recruit_earned_certificates', JSON.stringify(updated));
+      if (user) {
+        updateCareerProgress({ earnedCertificates: updated }).catch(err => console.error("Firebase certificate sync error:", err));
+      } else {
+        localStorage.setItem('recruit_earned_certificates', JSON.stringify(updated));
+      }
     }
     setShowCertificateId(courseId);
   };
@@ -445,56 +711,84 @@ export default function CoursesPage() {
     }
   };
 
-  // Simulate Auto-Pilot Learning Loop
+  // Class audio guidance timeline simulator
   useEffect(() => {
     let interval: any = null;
-    if (isPlayingAutoStudy && activeLearningCourse) {
+    if (isAudioLecturePlaying) {
       interval = setInterval(() => {
-        setActiveModuleProgress((prev) => {
-          const nextProgress = prev + 5; // advance by 5% every 1.5 seconds
-
-          if (nextProgress >= 100) {
-            // Milestone: complete
-            if (!notifiedMilestones.includes('complete')) {
-              setNotifiedMilestones(curr => [...curr, 'complete']);
-              handleMilestoneMessage('complete', 100, activeModuleIndex);
-            }
-            setIsPlayingAutoStudy(false); // Pause auto pilot at 100%
+        setAudioProgress(prev => {
+          if (prev >= 100) {
+            setIsAudioLecturePlaying(false);
             return 100;
           }
-
-          // Trigger milestones based on progress
-          if (nextProgress >= 5 && nextProgress < 30 && !notifiedMilestones.includes('intro')) {
-            setNotifiedMilestones(curr => [...curr, 'intro']);
-            handleMilestoneMessage('intro', nextProgress, activeModuleIndex);
-          } else if (nextProgress >= 30 && nextProgress < 60 && !notifiedMilestones.includes('concepts')) {
-            setNotifiedMilestones(curr => [...curr, 'concepts']);
-            handleMilestoneMessage('concepts', nextProgress, activeModuleIndex);
-          } else if (nextProgress >= 60 && nextProgress < 85 && !notifiedMilestones.includes('practical')) {
-            setNotifiedMilestones(curr => [...curr, 'practical']);
-            handleMilestoneMessage('practical', nextProgress, activeModuleIndex);
-          } else if (nextProgress >= 85 && !notifiedMilestones.includes('assessment')) {
-            setNotifiedMilestones(curr => [...curr, 'assessment']);
-            handleMilestoneMessage('assessment', nextProgress, activeModuleIndex);
-          }
-
-          return nextProgress;
+          return prev + 2;
         });
-      }, 1500);
+      }, 500);
     } else {
       clearInterval(interval);
     }
     return () => clearInterval(interval);
-  }, [isPlayingAutoStudy, activeLearningCourse, activeModuleIndex, notifiedMilestones]);
+  }, [isAudioLecturePlaying]);
+
+  // Update Arohi Chat when switching classroom tabs to provide active mentorship guidance
+  useEffect(() => {
+    if (!activeLearningCourse) return;
+    const currentTopic = activeLearningCourse.syllabus[activeModuleIndex];
+    let mentorMessage = '';
+
+    if (classroomTab === 'lecture') {
+      mentorMessage = `📖 **Lecture Deck Loaded**: I have opened the theoretical outline for **"${currentTopic}"**. Read through the core operational guidelines and key concept definitions. You can click **"🔊 Play Audio Lecture"** above to listen to my voiceover podcast summary!`;
+    } else if (classroomTab === 'sandbox') {
+      const cat = activeLearningCourse.category;
+      if (cat === 'tech') {
+        mentorMessage = `💻 **Coding Sandbox Active**: Try writing the required script inside our online code editor. Once done, click **"Execute Script ⚡"** to run compiler unit tests. I will audit your code structure and syntax parameters in real-time!`;
+      } else if (cat === 'business') {
+        mentorMessage = `📊 **MSME Balance Sheet Builder**: I have initialized your micro-business ledger! Adjust the revenues and expenses, choose your filing tax scheme, and click **"Generate Audited Ledger Sheet"** to test structural financial compliance.`;
+      } else {
+        mentorMessage = `🛠️ **Vocational Schematic Desk**: Welcome to the hardware simulation workbench! Select your diagnostic probe, dial your testing meter, and target the specific circuit node to take high-voltage measurements safely.`;
+      }
+    } else if (classroomTab === 'quiz') {
+      mentorMessage = `📝 **Chapter Quiz Ready**: Let's test your competency on **"${currentTopic}"**! Select the correct option below and submit. If you're unsure, feel free to switch back to the **Lecture** or **Sandbox Lab** to double-check!`;
+    }
+
+    if (mentorMessage) {
+      setTutorMessages(prev => {
+        // Only append if it doesn't already end with a similar message type
+        const lastMsg = prev[prev.length - 1];
+        if (lastMsg && lastMsg.text.includes(classroomTab)) return prev;
+        return [
+          ...prev,
+          { id: `tutor-tab-shift-${Date.now()}`, sender: 'tutor', text: mentorMessage }
+        ];
+      });
+    }
+  }, [classroomTab, activeModuleIndex, activeLearningCourse]);
 
   // Handle module click inside player
   const handleSelectModule = (index: number) => {
     setActiveModuleIndex(index);
-    setActiveModuleProgress(0);
-    setNotifiedMilestones([]);
     setSelectedQuizOption(null);
     setQuizSubmitted(false);
-    setIsPlayingAutoStudy(false);
+    setClassroomTab('lecture');
+    setIsAudioLecturePlaying(false);
+    setAudioProgress(0);
+    setTechTaskPassed(false);
+    setBizLedgerResult(null);
+
+    // Initialize sandbox challenge code/data for this unit
+    if (activeLearningCourse) {
+      const topic = activeLearningCourse.syllabus[index];
+      const content = getModuleContent(activeLearningCourse.id, topic, index);
+      if (activeLearningCourse.category === 'tech' && content.techChallenge) {
+        setEditorCode(content.techChallenge.starterCode);
+        setConsoleLogs(['[System] Compiler workspace loaded. Write code below and click Execute.']);
+      } else if (activeLearningCourse.category === 'vocational' && content.vocationalLab) {
+        setVocationalTool('multimeter');
+        setVocationalNode('ground-resistance');
+        setVocationalDials('resistance');
+        setVocationalConsole(['[System] Diagnostic hardware simulator online. Ready to scan hardware circuitry.']);
+      }
+    }
   };
 
   // Submit assessment quiz
@@ -513,6 +807,93 @@ export default function CoursesPage() {
     }
   };
 
+  // Execute coding script challenge
+  const handleExecuteTechCode = (expectedKeywords: string[], successMsg: string) => {
+    setConsoleLogs(prev => [...prev, '[Compiling] Verifying code syntax against TypeScript guidelines...', '[Testing] Running mock assertion tests...']);
+    setTimeout(() => {
+      const codeLower = editorCode.toLowerCase();
+      const allPassed = expectedKeywords.every(keyword => codeLower.includes(keyword.toLowerCase()));
+
+      if (allPassed) {
+        setConsoleLogs(prev => [
+          ...prev,
+          `[Success] Test assertions passed!`,
+          `[System] ${successMsg}`,
+          `[System] Checklist verification: Completed!`
+        ]);
+        setTechTaskPassed(true);
+        // Also mark checklist item completed automatically
+        const itemKey = `${activeLearningCourse?.id}-${activeLearningCourse?.syllabus[activeModuleIndex]}-2`;
+        setCheckedChecklistItems(prev => ({ ...prev, [itemKey]: true }));
+        handleSendTutorMessage(`Hi Arohi! I've successfully completed the coding challenge for "${activeLearningCourse?.syllabus[activeModuleIndex]}". The compiler output reports 100% success!`);
+      } else {
+        setConsoleLogs(prev => [
+          ...prev,
+          `[Error] Compilation failed! Missing key structural definitions: ${expectedKeywords.filter(k => !codeLower.includes(k.toLowerCase())).join(', ')}.`,
+          `[System] Please refine your implementation and try again.`
+        ]);
+        setTechTaskPassed(false);
+      }
+    }, 1000);
+  };
+
+  // Generate MSME business ledger sheet
+  const handleGenerateBusinessLedger = (targetInflow: number, targetProfit: number, itemName: string) => {
+    const rev = parseFloat(bizInflow) || 0;
+    const cost = parseFloat(bizOutflow) || 0;
+    const profit = rev - cost;
+    const margin = rev > 0 ? Math.round((profit / rev) * 100) : 0;
+    const isOk = rev >= targetInflow && profit >= targetProfit;
+
+    const result = {
+      ledgerNo: `LGR-${Math.floor(100000 + Math.random() * 900000)}`,
+      timestamp: new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
+      revenue: rev,
+      costs: cost,
+      profit,
+      margin,
+      isOk,
+      feedback: isOk
+        ? `✓ Compliant! Net profit of ₹${profit.toLocaleString()} meets criteria for collateral-free MSME bank credit lines.`
+        : `✗ Warning: Capital margins are below target benchmarks (Target Profit: ₹${targetProfit.toLocaleString()}). Audit flag raised.`
+    };
+
+    setBizLedgerResult(result);
+    if (isOk) {
+      const itemKey = `${activeLearningCourse?.id}-${activeLearningCourse?.syllabus[activeModuleIndex]}-1`;
+      setCheckedChecklistItems(prev => ({ ...prev, [itemKey]: true }));
+      handleSendTutorMessage(`Hi Arohi! I've audited the ledger balance sheet for "${activeLearningCourse?.syllabus[activeModuleIndex]}". Operating profit is ₹${profit.toLocaleString()}, satisfying MSME compliance parameters!`);
+    }
+  };
+
+  // Execute vocational hardware diagnostic probe
+  const handleExecuteVocationalDiagnostic = (correctTool: string, correctNode: string, correctDial: string, expectedVal: string, okLogs: string[]) => {
+    setVocationalConsole(prev => [...prev, `[Calibrating] Initializing diagnostics on node: ${vocationalNode}...`, `[Diagnosing] Aligning instrument probe using ${vocationalTool}...`]);
+    
+    setTimeout(() => {
+      // Check for node safety scan matches
+      const isCorrect = vocationalTool === correctTool && (vocationalNode === correctNode || correctNode === 'ground-resistance') && vocationalDials === correctDial;
+
+      if (isCorrect) {
+        setVocationalConsole(prev => [
+          ...prev,
+          ...okLogs,
+          `[Success] Telemetry lock established! Reading: ${expectedVal}`,
+          `[System] Circuit integrity: SECURE & NOMINAL ✓`
+        ]);
+        const itemKey = `${activeLearningCourse?.id}-${activeLearningCourse?.syllabus[activeModuleIndex]}-1`;
+        setCheckedChecklistItems(prev => ({ ...prev, [itemKey]: true }));
+        handleSendTutorMessage(`Hi Arohi! I ran live diagnostic checks on the circuit at "${vocationalNode}" node. Reading is stable at ${expectedVal}!`);
+      } else {
+        setVocationalConsole(prev => [
+          ...prev,
+          `[Telemetry Failure] Out of boundary bounds detected. Check tool selections or dial calibration settings.`,
+          `[System] Target expected: ${correctTool.toUpperCase()} on node ${correctNode.toUpperCase()} with dial ${correctDial.toUpperCase()}.`
+        ]);
+      }
+    }, 1000);
+  };
+
   // Send a message to the AI Study Tutor Companion
   const handleSendTutorMessage = (presetText?: string) => {
     const textToSend = presetText || tutorInput;
@@ -529,7 +910,7 @@ export default function CoursesPage() {
 
 1. **Active Core Principle**: Ensure all modules are completed and micro-quizzes are answered correctly.
 2. **Industry Best Practice**: Apply this technique inside our mock project sandboxes.
-3. **Continuous Review**: Feel free to toggle **⚡ Auto-Pilot Study** mode to automatically step through theoretical overviews!`;
+3. **Continuous Review**: Feel free to play our **Class Podcast Guide** to listen to my voiceover summary!`;
 
       if (textToSend.toLowerCase().includes('explain') || textToSend.toLowerCase().includes('guide')) {
         replyText = `Excellent question! In Unit ${activeModuleIndex + 1} (**${activeLearningCourse.syllabus[activeModuleIndex]}**), we prioritize structural safety, correct syntax parameters, and optimization protocols. 
@@ -563,7 +944,7 @@ Keep in mind:
           {
             id: 'welcome',
             sender: 'tutor',
-            text: `🎉 **Congratulations, ${candidateName}!** Your mock payment of **${activeLearningCourse.price}** has been verified, and the curriculum is successfully unlocked!\n\nNamaste! I am **Arohi**, your AI mentor. I have pre-loaded Unit 1: **"${activeLearningCourse.syllabus[0]}"** for you.\n\nI have automatically enabled **⚡ AI-Guided Auto-Pilot Study Mode**! Sit back and observe as I walk you through each phase of this lesson in detail, or toggle Auto-Pilot above to pause and read at your own pace.`
+            text: `🎉 **Congratulations, ${candidateName}!** Your enrollment payment of **${activeLearningCourse.price}** has been verified, and the curriculum is successfully unlocked!\n\nNamaste! I am **Arohi**, your AI Classroom Mentor. I have pre-loaded Unit 1: **"${activeLearningCourse.syllabus[0]}"** for you.\n\nWe will be studying **topic-by-topic** and **chapter-by-chapter** for a smooth learning experience:\n\n1. **📖 Lecture Slide**: Review the core operational details and click **"🔊 Play Audio Lecture"** above to hear my audio notes.\n2. **💻 Sandbox Lab**: Open our interactive sandbox to write code, balance MSME cash flows, or conduct schematic diagnostics.\n3. **✍️ Micro-Quiz**: Complete the final test to verify your mastery and unlock the next chapter!`
           }
         ]);
         setWasAutoLaunched(false);
@@ -572,7 +953,7 @@ Keep in mind:
           {
             id: 'welcome',
             sender: 'tutor',
-            text: `Namaste ${candidateName}! I am **Arohi**, your upskilling mentor. We are starting Unit ${activeModuleIndex + 1}: **"${activeLearningCourse.syllabus[activeModuleIndex]}"** inside the **"${activeLearningCourse.title}"** program.\n\nI am ready to help you learn in deep detail. You can click **⚡ Auto-Pilot Study Mode** above, and I will act as your personal trainer—guiding you step-by-step through the chapter's core concepts and practical checklist, before you complete the final quiz!`
+            text: `Namaste ${candidateName}! I am **Arohi**, your upskilling mentor. We are starting Unit ${activeModuleIndex + 1}: **"${activeLearningCourse.syllabus[activeModuleIndex]}"** inside the **"${activeLearningCourse.title}"** program.\n\nUse the tabs in the middle desk to study this topic smoothly. Let me know if you have any questions or need a detailed cheat sheet!`
           }
         ]);
       }
@@ -606,43 +987,43 @@ Keep in mind:
             <button
               onClick={() => {
                 setActiveLearningCourse(null);
-                setIsPlayingAutoStudy(false);
+                setIsAudioLecturePlaying(false);
               }}
               className="px-4 py-2 bg-[#1b143c] hover:bg-[#251e54] text-slate-300 hover:text-white border border-[#2d2163] text-xs font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer flex items-center gap-1 shrink-0"
             >
               ← Back to Catalog
             </button>
             <div className="min-w-0">
-              <span className="text-[9px] uppercase font-black text-[#a78bfa] tracking-widest block">Arohi Auto-Learning Workspace</span>
+              <span className="text-[9px] uppercase font-black text-[#a78bfa] tracking-widest block">Arohi Integrated Online Classroom</span>
               <h3 className="text-sm font-black text-white truncate leading-tight mt-0.5">{course.title}</h3>
             </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-3 shrink-0">
-            {/* Auto-pilot mode status indicator */}
+            {/* Audio guided lecture player */}
             <button
               onClick={() => {
-                if (activeModuleProgress >= 100) {
-                  setActiveModuleProgress(0);
-                  setNotifiedMilestones([]);
+                setIsAudioLecturePlaying(!isAudioLecturePlaying);
+                if (!isAudioLecturePlaying) {
+                  setAudioProgress(0);
+                  handleSendTutorMessage(`Hi Arohi! I've started the audio guide. Can you narrate the core theoretical focus for "${currentTopic}" in our digital classroom?`);
                 }
-                setIsPlayingAutoStudy(!isPlayingAutoStudy);
               }}
               className={`px-3.5 py-2 text-[10px] font-black uppercase tracking-wider rounded-xl transition-all border flex items-center gap-1.5 cursor-pointer ${
-                isPlayingAutoStudy 
-                  ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-[0_0_10px_rgba(245,158,11,0.2)]' 
+                isAudioLecturePlaying 
+                  ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 shadow-[0_0_10px_rgba(16,185,129,0.2)]' 
                   : 'bg-[#1b143c] hover:bg-[#231a54] text-slate-300 border-[#2d2163]'
               }`}
             >
-              {isPlayingAutoStudy ? (
+              {isAudioLecturePlaying ? (
                 <>
-                  <Pause className="w-3.5 h-3.5 text-amber-400 animate-spin" />
-                  Auto-Pilot: Active ({activeModuleProgress}%)
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                  🔊 Audio Guide: Playing ({audioProgress}%)
                 </>
               ) : (
                 <>
-                  <Play className="w-3.5 h-3.5 text-[#00e676]" />
-                  ⚡ Auto-Pilot Study Mode
+                  <Play className="w-3 h-3 text-[#00e676]" />
+                  🔊 Play Class Podcast Guide
                 </>
               )}
             </button>
@@ -662,6 +1043,29 @@ Keep in mind:
             )}
           </div>
         </div>
+
+        {/* Animated Audio Equalizer Waveform overlay */}
+        {isAudioLecturePlaying && (
+          <div className="bg-gradient-to-r from-[#171239] to-[#0c0824] border border-emerald-500/30 p-3.5 rounded-2xl flex items-center justify-between gap-4 animate-in slide-in-from-top-2 duration-300">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
+                <span className="text-emerald-400 font-bold text-xs animate-pulse">●</span>
+              </div>
+              <div className="text-left">
+                <span className="text-[10px] font-black uppercase tracking-widest text-[#00e676]">Arohi Classroom Podcast Stream</span>
+                <p className="text-xs font-bold text-slate-200 mt-0.5">Narrating core lecture guidelines for Unit {activeModuleIndex + 1}...</p>
+              </div>
+            </div>
+            {/* Audio waveform */}
+            <div className="flex items-end gap-1 h-5">
+              <span className="w-1 bg-emerald-500 rounded-full animate-[bounce_0.8s_infinite_0.1s]" style={{ height: '70%' }}></span>
+              <span className="w-1 bg-emerald-400 rounded-full animate-[bounce_0.8s_infinite_0.3s]" style={{ height: '40%' }}></span>
+              <span className="w-1 bg-[#00e676] rounded-full animate-[bounce_0.8s_infinite_0.2s]" style={{ height: '90%' }}></span>
+              <span className="w-1 bg-emerald-500 rounded-full animate-[bounce_0.8s_infinite_0.5s]" style={{ height: '50%' }}></span>
+              <span className="w-1 bg-emerald-400 rounded-full animate-[bounce_0.8s_infinite_0.4s]" style={{ height: '80%' }}></span>
+            </div>
+          </div>
+        )}
 
         {/* Learning Workspace Progress tracking bar */}
         <div className="bg-[#120e2a] border border-[#2d2163] p-4 rounded-2xl text-left text-white space-y-2">
@@ -743,159 +1147,505 @@ Keep in mind:
             </div>
           </div>
 
-          {/* MIDDLE COLUMN: Interactive Content & Micro-Assessment */}
+          {/* MIDDLE COLUMN: Interactive Online Classroom Desk */}
           <div className="lg:col-span-6 space-y-4 text-left">
             
-            {/* Auto Learning Slides/Text card */}
-            <div className="bg-[#120e2a] border border-[#2d2163] p-6 rounded-3xl shadow-xl space-y-5">
-              
-              <div className="flex items-center justify-between border-b border-[#21184a] pb-3">
-                <span className="text-[10px] font-black uppercase text-[#a78bfa] tracking-widest block">Active Learning Canvas</span>
-                <span className="text-xs font-black text-slate-400">Unit {activeModuleIndex + 1} of {topics.length}</span>
-              </div>
-
-              <div className="space-y-4">
-                <h4 className="text-lg font-black text-white">{currentTopic}</h4>
-                <p className="text-xs sm:text-sm text-slate-300 font-semibold leading-relaxed">
-                  {activeContent.overview}
-                </p>
-              </div>
-
-              {/* Highlight Cards */}
-              <div className="bg-[#18133a] border border-[#2c2063] p-4 rounded-2xl space-y-2.5">
-                <span className="text-[9px] font-black uppercase tracking-wider text-[#a78bfa] flex items-center gap-1.5">
-                  <BrainCircuit className="w-4 h-4 text-yellow-300" /> Key Concepts Summary
-                </span>
-                <div className="space-y-2">
-                  {activeContent.keyPoints.map((point, i) => (
-                    <div key={i} className="flex items-start gap-2 text-xs font-semibold text-slate-200">
-                      <span className="text-[#a78bfa] shrink-0 font-black">•</span>
-                      <span>{point}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Auto Learning Interactive Sandbox Checklist */}
-              <div className="space-y-3 pt-2">
-                <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block">Practical Sandbox Checklist</span>
-                <div className="grid grid-cols-1 gap-2">
-                  {activeContent.checklist.map((item, idx) => {
-                    const itemKey = `${course.id}-${currentTopic}-${idx}`;
-                    const isItemChecked = !!checkedChecklistItems[itemKey];
-
-                    return (
-                      <button
-                        key={idx}
-                        onClick={() => toggleChecklistItem(course.id, currentTopic, idx)}
-                        className="w-full text-left bg-[#140f33] border border-[#231a4f] hover:border-[#3d2c8c] p-3 rounded-xl flex items-center justify-between gap-2 text-xs font-semibold cursor-pointer transition-colors"
-                      >
-                        <span className="text-slate-200">{item}</span>
-                        <div className="shrink-0">
-                          {isItemChecked ? (
-                            <span className="text-[9px] font-black uppercase tracking-wider text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded">
-                              Verified ✓
-                            </span>
-                          ) : (
-                            <span className="text-[9px] font-black uppercase tracking-wider text-slate-400 bg-[#120e2a] px-2 py-0.5 rounded">
-                              Pending
-                            </span>
-                          )}
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
+            {/* Integrated Classroom Tabs Header */}
+            <div className="bg-[#120e2a] border border-[#2d2163] rounded-2xl p-1.5 flex items-center justify-between gap-1 shadow-xl">
+              <button 
+                onClick={() => setClassroomTab('lecture')}
+                className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer ${
+                  classroomTab === 'lecture'
+                    ? 'bg-[#7c3aed] text-white shadow-md'
+                    : 'hover:bg-[#1b143c] text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                <BookOpen className="w-3.5 h-3.5 text-blue-400" />
+                1. Lecture Deck
+              </button>
+              <button 
+                onClick={() => setClassroomTab('sandbox')}
+                className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer ${
+                  classroomTab === 'sandbox'
+                    ? 'bg-[#7c3aed] text-white shadow-md'
+                    : 'hover:bg-[#1b143c] text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                <BrainCircuit className="w-3.5 h-3.5 text-emerald-400" />
+                2. Sandbox Lab
+              </button>
+              <button 
+                onClick={() => setClassroomTab('quiz')}
+                className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer ${
+                  classroomTab === 'quiz'
+                    ? 'bg-[#7c3aed] text-white shadow-md'
+                    : 'hover:bg-[#1b143c] text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                <HelpCircle className="w-3.5 h-3.5 text-amber-400" />
+                3. Micro-Quiz
+              </button>
             </div>
 
-            {/* Assessment Micro Quiz */}
-            <div className="bg-[#120e2a] border border-[#2d2163] p-6 rounded-3xl shadow-xl space-y-5">
-              
-              <div className="flex items-center gap-2 border-b border-[#21184a] pb-3">
-                <HelpCircle className="w-5 h-5 text-amber-400" />
-                <div>
-                  <h4 className="text-xs font-black uppercase tracking-wider text-slate-200 leading-none">Module Micro-Assessment</h4>
-                  <p className="text-[10px] text-slate-400 mt-0.5">Answer correctly to verify unit competency.</p>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <p className="text-xs sm:text-sm font-black text-white leading-relaxed">
-                  {activeContent.quiz.question}
-                </p>
-
-                <div className="space-y-2">
-                  {activeContent.quiz.options.map((option, idx) => {
-                    const isSelected = selectedQuizOption === idx;
-                    return (
-                      <button
-                        key={idx}
-                        disabled={quizSubmitted}
-                        onClick={() => setSelectedQuizOption(idx)}
-                        className={`w-full text-left p-3 rounded-xl border text-xs font-semibold transition-all cursor-pointer flex justify-between items-center ${
-                          isSelected
-                            ? 'bg-[#22154c] border-[#7c3aed] text-[#c084fc] font-bold'
-                            : 'bg-[#18133a] hover:bg-[#20184b] border-[#251a54] text-slate-300'
-                        }`}
-                      >
-                        <span>{option}</span>
-                        <div className={`w-4.5 h-4.5 rounded-full border flex items-center justify-center shrink-0 ${
-                          isSelected ? 'border-[#7c3aed] bg-[#7c3aed]/10 text-[#7c3aed]' : 'border-slate-500'
-                        }`}>
-                          {isSelected && <span className="w-2.5 h-2.5 rounded-full bg-[#7c3aed]"></span>}
-                        </div>
-                      </button>
-                    );
-                  })}
+            {/* CLASSROOM TAB 1: LECTURE DECK */}
+            {classroomTab === 'lecture' && (
+              <div className="bg-[#120e2a] border border-[#2d2163] p-6 rounded-3xl shadow-xl space-y-5 animate-in fade-in duration-200">
+                <div className="flex items-center justify-between border-b border-[#21184a] pb-3">
+                  <span className="text-[10px] font-black uppercase text-[#a78bfa] tracking-widest block">Classroom Theory Slide</span>
+                  <span className="text-xs font-black text-slate-400">Unit {activeModuleIndex + 1} of {topics.length}</span>
                 </div>
 
-                {/* Submit Feedback panel */}
-                {quizSubmitted ? (
-                  <div className={`p-4 rounded-xl border text-xs font-semibold ${
-                    quizIsCorrect 
-                      ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300' 
-                      : 'bg-rose-500/10 border-rose-500/30 text-rose-300'
-                  }`}>
-                    <p className="font-bold uppercase tracking-wider text-[10px]">
-                      {quizIsCorrect ? 'Correct Answer! Verified ✓' : 'Incorrect Answer. Please retry!'}
+                <div className="space-y-3.5">
+                  <h4 className="text-base font-black text-white">{currentTopic}</h4>
+                  <p className="text-xs sm:text-sm text-slate-300 font-semibold leading-relaxed">
+                    {activeContent.overview}
+                  </p>
+                </div>
+
+                {/* Key Concepts Summary Card */}
+                <div className="bg-[#18133a] border border-[#2c2063] p-4 rounded-2xl space-y-2.5">
+                  <span className="text-[9px] font-black uppercase tracking-wider text-[#a78bfa] flex items-center gap-1.5">
+                    <Sparkles className="w-4 h-4 text-yellow-300 animate-pulse" /> Core Academic Pillars
+                  </span>
+                  <div className="space-y-2">
+                    {activeContent.keyPoints.map((point, i) => (
+                      <div key={i} className="flex items-start gap-2.5 text-xs font-semibold text-slate-200">
+                        <span className="text-[#a78bfa] shrink-0 font-black">•</span>
+                        <span>{point}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Mentor Tip Card */}
+                <div className="bg-gradient-to-r from-[#171339] to-[#0c0824] border border-[#30216b] p-4 rounded-2xl flex gap-3 items-start">
+                  <div className="w-8 h-8 rounded-lg overflow-hidden border border-[#3b2a80] shrink-0">
+                    <ArohiAvatar className="w-full h-full" />
+                  </div>
+                  <div>
+                    <span className="text-[9px] font-black uppercase text-[#a78bfa] tracking-wider block">Arohi's Classroom Insights</span>
+                    <p className="text-[11px] text-slate-300 font-semibold leading-relaxed mt-0.5">
+                      "Make sure to read through this unit carefully! In our next sandbox, we will perform hands-on tests to verify these parameters. Let me know if any definition feels tricky!"
                     </p>
-                    <p className="mt-1 leading-normal font-semibold">{activeContent.quiz.explanation}</p>
-                    
-                    {quizIsCorrect && activeModuleIndex < topics.length - 1 && (
-                      <button
-                        onClick={() => handleSelectModule(activeModuleIndex + 1)}
-                        className="mt-3.5 w-full bg-emerald-500 hover:bg-[#00c853] text-white font-black text-[10px] uppercase tracking-widest py-2.5 rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5"
-                      >
-                        Proceed to Next Unit →
-                      </button>
-                    )}
+                  </div>
+                </div>
 
-                    {!quizIsCorrect && (
+                {/* Progress controls */}
+                <button
+                  onClick={() => setClassroomTab('sandbox')}
+                  className="w-full bg-gradient-to-r from-[#7c3aed] to-[#a855f7] hover:from-[#6d28d9] hover:to-[#9333ea] text-white font-black text-xs uppercase tracking-wider py-3.5 rounded-2xl transition-all cursor-pointer shadow-lg flex items-center justify-center gap-2 hover:scale-[1.01] active:scale-95"
+                >
+                  <BrainCircuit className="w-4 h-4 text-emerald-400" /> Next Step: Open Interactive Lab Sandbox 💻
+                </button>
+              </div>
+            )}
+
+            {/* CLASSROOM TAB 2: SANDBOX LAB */}
+            {classroomTab === 'sandbox' && (
+              <div className="bg-[#120e2a] border border-[#2d2163] p-6 rounded-3xl shadow-xl space-y-5 animate-in fade-in duration-200">
+                <div className="flex items-center justify-between border-b border-[#21184a] pb-3">
+                  <span className="text-[10px] font-black uppercase text-emerald-400 tracking-widest block flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    Interactive Sandbox Environment
+                  </span>
+                  <span className="text-xs bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 px-2.5 py-1 rounded font-bold text-[10px] uppercase">
+                    Lab {activeModuleIndex + 1} active
+                  </span>
+                </div>
+
+                {/* RENDER DYNAMIC LAB BASED ON CATEGORY */}
+                {course.category === 'tech' && activeContent.techChallenge && (
+                  <div className="space-y-4">
+                    <div className="bg-[#19143d] border border-[#35286e] p-3.5 rounded-2xl text-xs text-slate-200">
+                      <p className="font-bold text-white mb-1">💻 Code Challenge Objective:</p>
+                      <p className="font-semibold text-slate-300 leading-normal">{activeContent.techChallenge.instructions}</p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
+                      {/* Left: IDE Editor */}
+                      <div className="md:col-span-7 flex flex-col">
+                        <label className="text-[9px] font-black uppercase tracking-wider text-slate-400 mb-1">Interactive Script Editor</label>
+                        <textarea
+                          value={editorCode}
+                          onChange={(e) => setEditorCode(e.target.value)}
+                          className="w-full h-48 bg-[#0c0822] border border-[#2b215e] focus:border-[#7c3aed] focus:outline-none p-3 rounded-2xl font-mono text-[11px] text-emerald-300 leading-relaxed resize-none shadow-inner"
+                        ></textarea>
+                      </div>
+
+                      {/* Right: UNIX Terminal Console */}
+                      <div className="md:col-span-5 flex flex-col">
+                        <label className="text-[9px] font-black uppercase tracking-wider text-slate-400 mb-1">Build Console Output</label>
+                        <div className="w-full h-48 bg-[#070518] border border-[#1e1742] p-3 rounded-2xl font-mono text-[9px] text-slate-300 space-y-1 overflow-y-auto shadow-inner text-left">
+                          {consoleLogs.map((log, i) => (
+                            <p key={i} className={
+                              log.includes('[Success]') || log.includes('passed') ? 'text-emerald-400 font-bold' :
+                              log.includes('[Error]') || log.includes('failed') ? 'text-rose-400 font-bold' :
+                              log.includes('[Compiling]') || log.includes('[Testing]') ? 'text-amber-400' : 'text-slate-400'
+                            }>
+                              {log}
+                            </p>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Action buttons */}
+                    <div className="flex gap-2.5">
+                      <button
+                        onClick={() => handleExecuteTechCode(activeContent.techChallenge.expectedKeywords, activeContent.techChallenge.successMsg)}
+                        className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-xs uppercase tracking-wider py-3 rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-md active:scale-95"
+                      >
+                        Execute Script ⚡
+                      </button>
                       <button
                         onClick={() => {
-                          setQuizSubmitted(false);
-                          setSelectedQuizOption(null);
+                          setEditorCode(activeContent.techChallenge.starterCode);
+                          setConsoleLogs(['[System] Workspace reset to starter code template.']);
+                          setTechTaskPassed(false);
                         }}
-                        className="mt-3 text-[10px] font-black uppercase tracking-wider text-rose-400 hover:underline cursor-pointer"
+                        className="bg-[#1b143c] border border-[#2d2163] hover:bg-[#251e54] text-slate-300 px-4 rounded-xl text-xs font-bold transition-colors cursor-pointer"
                       >
-                        Retry assessment
+                        Reset Template
                       </button>
+                    </div>
+                  </div>
+                )}
+
+                {course.category === 'business' && activeContent.businessTask && (
+                  <div className="space-y-4">
+                    <div className="bg-[#19143d] border border-[#35286e] p-3.5 rounded-2xl text-xs text-slate-200">
+                      <p className="font-bold text-white mb-1">📈 General Ledger Audit Task:</p>
+                      <p className="font-semibold text-slate-300 leading-normal">{activeContent.businessTask.instructions}</p>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3 text-xs">
+                      <div>
+                        <label className="block text-[10px] font-black uppercase text-slate-400 mb-1">MSME Business Name</label>
+                        <input
+                          type="text"
+                          value={bizName}
+                          onChange={(e) => setBizName(e.target.value)}
+                          className="w-full bg-[#18133a] border border-[#2d2163] px-3 py-2 rounded-xl text-white font-semibold"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-black uppercase text-slate-400 mb-1">GST filing scheme</label>
+                        <select
+                          value={bizTaxScheme}
+                          onChange={(e) => setBizTaxScheme(e.target.value)}
+                          className="w-full bg-[#18133a] border border-[#2d2163] px-3 py-2 rounded-xl text-white font-semibold focus:outline-none"
+                        >
+                          <option value="GST-Composition">GST Composition (1%)</option>
+                          <option value="Regular-18%">Regular Service filing (18%)</option>
+                          <option value="ITR-4-Presumptive">Presumptive Business ITR (Section 44AD)</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-black uppercase text-slate-400 mb-1">Projected Monthly Revenue (₹)</label>
+                        <input
+                          type="number"
+                          value={bizInflow}
+                          onChange={(e) => setBizInflow(e.target.value)}
+                          className="w-full bg-[#18133a] border border-[#2d2163] px-3 py-2 rounded-xl text-white font-semibold"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-black uppercase text-slate-400 mb-1">Estimated Expenses (₹)</label>
+                        <input
+                          type="number"
+                          value={bizOutflow}
+                          onChange={(e) => setBizOutflow(e.target.value)}
+                          className="w-full bg-[#18133a] border border-[#2d2163] px-3 py-2 rounded-xl text-white font-semibold"
+                        />
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => handleGenerateBusinessLedger(activeContent.businessTask.targetInflow, activeContent.businessTask.targetProfit, activeContent.businessTask.ledgerItemName)}
+                      className="w-full bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-xs uppercase tracking-wider py-3 rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-md active:scale-95"
+                    >
+                      Generate Audited Cash Flow & Tax Statement 📊
+                    </button>
+
+                    {/* Audited Statement Invoice mock */}
+                    {bizLedgerResult && (
+                      <div className="bg-white text-slate-900 p-5 rounded-2xl font-mono text-[10px] text-left border-4 border-double border-slate-300 relative overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
+                        <div className="absolute top-0 right-0 w-16 h-16 bg-[#00e676]/10 rounded-full flex items-center justify-center border-l border-b border-dashed border-[#00e676]">
+                          <span className="text-[8px] font-black uppercase text-emerald-600 tracking-wider rotate-12">Audited</span>
+                        </div>
+                        <h5 className="font-black text-center text-xs border-b border-slate-300 pb-1.5 uppercase">ODISHA MSME REVENUE COMPLIANCE LEDGER</h5>
+                        <div className="grid grid-cols-2 gap-2 mt-3 text-[9px] font-bold text-slate-600">
+                          <div>Enterprise: {bizName}</div>
+                          <div className="text-right">Ledger ID: {bizLedgerResult.ledgerNo}</div>
+                          <div>Audit Date: {bizLedgerResult.timestamp}</div>
+                          <div className="text-right">Filing: {bizTaxScheme}</div>
+                        </div>
+
+                        <div className="border-t border-b border-slate-200 my-3 py-2 space-y-1 font-bold text-slate-800 text-[10px]">
+                          <div className="flex justify-between">
+                            <span>Projected Monthly Revenue:</span>
+                            <span>₹{bizLedgerResult.revenue.toLocaleString()}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Operating Expenses:</span>
+                            <span>- ₹{bizLedgerResult.costs.toLocaleString()}</span>
+                          </div>
+                          <div className="flex justify-between border-t border-slate-200 pt-1.5 font-black text-slate-950">
+                            <span>Net Operating Margin ({bizLedgerResult.margin}%):</span>
+                            <span className={bizLedgerResult.profit > 0 ? 'text-emerald-600' : 'text-rose-600'}>
+                              ₹{bizLedgerResult.profit.toLocaleString()}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className={`p-2.5 rounded-xl border font-sans text-[10px] font-semibold leading-relaxed ${
+                          bizLedgerResult.isOk 
+                            ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-800' 
+                            : 'bg-rose-500/10 border-rose-500/30 text-rose-800'
+                        }`}>
+                          {bizLedgerResult.feedback}
+                        </div>
+                      </div>
                     )}
                   </div>
-                ) : (
-                  <button
-                    disabled={selectedQuizOption === null}
-                    onClick={() => handleQuizSubmit(activeContent.quiz.answerIdx)}
-                    className="w-full bg-[#7c3aed] hover:bg-[#6d28d9] disabled:bg-[#1a1435] disabled:text-slate-500 text-white font-black text-xs uppercase tracking-wider py-3 rounded-xl transition-all cursor-pointer shadow-md disabled:cursor-not-allowed"
-                  >
-                    Submit Answer
-                  </button>
                 )}
-              </div>
 
-            </div>
+                {course.category === 'vocational' && activeContent.vocationalLab && (
+                  <div className="space-y-4">
+                    <div className="bg-[#19143d] border border-[#35286e] p-3.5 rounded-2xl text-xs text-slate-200">
+                      <p className="font-bold text-white mb-1">🛠️ Diagnostic Hardware Task:</p>
+                      <p className="font-semibold text-slate-300 leading-normal">{activeContent.vocationalLab.instructions}</p>
+                    </div>
+
+                    {/* Schematic map visualization */}
+                    <div className="bg-[#09061a] border border-[#231752] p-4 rounded-2xl space-y-3 relative select-none">
+                      <span className="text-[8px] font-black uppercase text-slate-500 tracking-wider absolute top-2 left-3 block">CIRCUIT SCHEMATIC MAP</span>
+                      
+                      <div className="flex flex-wrap justify-center items-center gap-6 py-6 font-mono text-[9px] font-bold">
+                        <div className={`px-3 py-2 rounded-lg border transition-all ${vocationalNode === 'positive-terminal' ? 'bg-amber-500/10 border-amber-500 text-amber-200 scale-105' : 'bg-[#120e2a] border-[#221752] text-slate-400'}`}>
+                          [ + V IN ]<br/>Cell Node
+                        </div>
+                        <span className="text-slate-700">───</span>
+                        <div className={`px-3 py-2 rounded-lg border transition-all ${vocationalNode === 'inverter-controller' ? 'bg-amber-500/10 border-amber-500 text-amber-200 scale-105' : 'bg-[#120e2a] border-[#221752] text-slate-400'}`}>
+                          [ INVERTER REG ]<br/>Grid Controller
+                        </div>
+                        <span className="text-slate-700">───</span>
+                        <div className={`px-3 py-2 rounded-lg border transition-all ${vocationalNode === 'sensor-array' ? 'bg-amber-500/10 border-amber-500 text-amber-200 scale-105' : 'bg-[#120e2a] border-[#221752] text-slate-400'}`}>
+                          [ SENSOR GYRO ]<br/>Bus Feedback
+                        </div>
+                        <span className="text-slate-700">───</span>
+                        <div className={`px-3 py-2 rounded-lg border transition-all ${vocationalNode === 'ground-resistance' ? 'bg-emerald-500/10 border-emerald-500 text-emerald-200 scale-105' : 'bg-[#120e2a] border-[#221752] text-slate-400'}`}>
+                          [ GND ROD ]<br/>0.0V Return
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Diagnostic configurations */}
+                    <div className="grid grid-cols-3 gap-2.5 text-xs">
+                      <div>
+                        <label className="block text-[9px] font-black uppercase text-slate-400 mb-1">Select Tool</label>
+                        <select
+                          value={vocationalTool}
+                          onChange={(e) => setVocationalTool(e.target.value)}
+                          className="w-full bg-[#18133a] border border-[#2d2163] px-2.5 py-2 rounded-xl text-white font-semibold text-[11px]"
+                        >
+                          <option value="multimeter">Digital Multimeter (V/Ω)</option>
+                          <option value="thermal">Thermal Scanner (°C)</option>
+                          <option value="pressure">Pressure Manometer (Bar)</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-[9px] font-black uppercase text-slate-400 mb-1">Target Node</label>
+                        <select
+                          value={vocationalNode}
+                          onChange={(e) => setVocationalNode(e.target.value)}
+                          className="w-full bg-[#18133a] border border-[#2d2163] px-2.5 py-2 rounded-xl text-white font-semibold text-[11px]"
+                        >
+                          <option value="positive-terminal">Cell Node (+V IN)</option>
+                          <option value="inverter-controller">Grid Inverter Controller</option>
+                          <option value="sensor-array">Sensor Gyro Bus</option>
+                          <option value="ground-resistance">Ground Rod (GND Return)</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-[9px] font-black uppercase text-slate-400 mb-1">Dial Setting</label>
+                        <select
+                          value={vocationalDials}
+                          onChange={(e) => setVocationalDials(e.target.value)}
+                          className="w-full bg-[#18133a] border border-[#2d2163] px-2.5 py-2 rounded-xl text-white font-semibold text-[11px]"
+                        >
+                          <option value="voltage">Voltage (V / AC-DC)</option>
+                          <option value="resistance">Resistance (Ω)</option>
+                          <option value="temperature">Temperature (°C)</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => handleExecuteVocationalDiagnostic(activeContent.vocationalLab.correctTool, activeContent.vocationalLab.correctNode, activeContent.vocationalLab.correctDial, activeContent.vocationalLab.expectedVal, activeContent.vocationalLab.okLogs)}
+                      className="w-full bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-xs uppercase tracking-wider py-3 rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-md active:scale-95"
+                    >
+                      Conduct Live Circuit Diagnostics ⚡
+                    </button>
+
+                    {/* Vocational console telemetry */}
+                    <div className="w-full h-32 bg-[#070518] border border-[#1e1742] p-3 rounded-2xl font-mono text-[9px] text-slate-300 space-y-1 overflow-y-auto shadow-inner text-left">
+                      {vocationalConsole.map((log, i) => (
+                        <p key={i} className={
+                          log.includes('[Success]') || log.includes('SAFE') || log.includes('NOMINAL') ? 'text-emerald-400 font-bold' :
+                          log.includes('[Telemetry Failure]') || log.includes('Incorrect') ? 'text-rose-400 font-bold' :
+                          log.includes('[Diagnosing]') || log.includes('[Calibrating]') ? 'text-amber-400' : 'text-slate-400'
+                        }>
+                          {log}
+                        </p>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Practical Checklist Integrated under sandbox */}
+                <div className="space-y-3 pt-2.5 border-t border-[#231a4f]">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block">Practical Sandbox Checklist</span>
+                  <div className="grid grid-cols-1 gap-2">
+                    {activeContent.checklist.map((item, idx) => {
+                      const itemKey = `${course.id}-${currentTopic}-${idx}`;
+                      const isItemChecked = !!checkedChecklistItems[itemKey];
+
+                      return (
+                        <button
+                          key={idx}
+                          onClick={() => toggleChecklistItem(course.id, currentTopic, idx)}
+                          className="w-full text-left bg-[#140f33] border border-[#231a4f] hover:border-[#3d2c8c] p-3 rounded-xl flex items-center justify-between gap-2 text-xs font-semibold cursor-pointer transition-colors"
+                        >
+                          <span className="text-slate-200">{item}</span>
+                          <div className="shrink-0">
+                            {isItemChecked ? (
+                              <span className="text-[9px] font-black uppercase tracking-wider text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded">
+                                Verified ✓
+                              </span>
+                            ) : (
+                              <span className="text-[9px] font-black uppercase tracking-wider text-slate-400 bg-[#120e2a] px-2 py-0.5 rounded">
+                                Pending
+                              </span>
+                            )}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Next Step procedurals */}
+                <button
+                  onClick={() => setClassroomTab('quiz')}
+                  className="w-full bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-slate-950 font-black text-xs uppercase tracking-wider py-3.5 rounded-2xl transition-all cursor-pointer shadow-lg flex items-center justify-center gap-2 hover:scale-[1.01] active:scale-95"
+                >
+                  <HelpCircle className="w-4 h-4 text-slate-950" /> Next Step: Open Chapter Micro-Quiz 📝
+                </button>
+              </div>
+            )}
+
+            {/* CLASSROOM TAB 3: MICRO-QUIZ */}
+            {classroomTab === 'quiz' && (
+              <div className="bg-[#120e2a] border border-[#2d2163] p-6 rounded-3xl shadow-xl space-y-5 animate-in fade-in duration-200">
+                <div className="flex items-center gap-2 border-b border-[#21184a] pb-3">
+                  <HelpCircle className="w-5 h-5 text-amber-400" />
+                  <div>
+                    <h4 className="text-xs font-black uppercase tracking-wider text-slate-200 leading-none">Module Micro-Assessment</h4>
+                    <p className="text-[10px] text-slate-400 mt-0.5">Test your unit competency to progress cleanly.</p>
+                  </div>
+                </div>
+
+                {/* Gentle study prompt reminder */}
+                {course.category === 'tech' && !techTaskPassed && (
+                  <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl text-[10px] font-semibold text-amber-300">
+                    💡 Mentor Suggestion: Have you executed your code successfully in the **Sandbox Lab** yet? Try trying the lab challenge to verify code logic first!
+                  </div>
+                )}
+
+                <div className="space-y-4">
+                  <p className="text-xs sm:text-sm font-black text-white leading-relaxed">
+                    {activeContent.quiz.question}
+                  </p>
+
+                  <div className="space-y-2">
+                    {activeContent.quiz.options.map((option, idx) => {
+                      const isSelected = selectedQuizOption === idx;
+                      return (
+                        <button
+                          key={idx}
+                          disabled={quizSubmitted}
+                          onClick={() => setSelectedQuizOption(idx)}
+                          className={`w-full text-left p-3 rounded-xl border text-xs font-semibold transition-all cursor-pointer flex justify-between items-center ${
+                            isSelected
+                              ? 'bg-[#22154c] border-[#7c3aed] text-[#c084fc] font-bold'
+                              : 'bg-[#18133a] hover:bg-[#20184b] border-[#251a54] text-slate-300'
+                          }`}
+                        >
+                          <span>{option}</span>
+                          <div className={`w-4.5 h-4.5 rounded-full border flex items-center justify-center shrink-0 ${
+                            isSelected ? 'border-[#7c3aed] bg-[#7c3aed]/10 text-[#7c3aed]' : 'border-slate-500'
+                          }`}>
+                            {isSelected && <span className="w-2.5 h-2.5 rounded-full bg-[#7c3aed]"></span>}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Submit Feedback panel */}
+                  {quizSubmitted ? (
+                    <div className={`p-4 rounded-xl border text-xs font-semibold ${
+                      quizIsCorrect 
+                        ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300' 
+                        : 'bg-rose-500/10 border-rose-500/30 text-rose-300'
+                    }`}>
+                      <p className="font-bold uppercase tracking-wider text-[10px]">
+                        {quizIsCorrect ? 'Correct Answer! Verified ✓' : 'Incorrect Answer. Please retry!'}
+                      </p>
+                      <p className="mt-1 leading-normal font-semibold">{activeContent.quiz.explanation}</p>
+                      
+                      {quizIsCorrect && activeModuleIndex < topics.length - 1 && (
+                        <button
+                          onClick={() => handleSelectModule(activeModuleIndex + 1)}
+                          className="mt-3.5 w-full bg-emerald-500 hover:bg-[#00c853] text-white font-black text-[10px] uppercase tracking-widest py-2.5 rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 hover:scale-[1.01]"
+                        >
+                          Unlock Next Unit: Proceed Chapter-by-Chapter →
+                        </button>
+                      )}
+
+                      {quizIsCorrect && activeModuleIndex === topics.length - 1 && (
+                        <div className="mt-3.5 p-3.5 bg-yellow-500/10 border border-yellow-500/30 text-yellow-300 rounded-xl space-y-2 text-center animate-bounce">
+                          <span className="text-lg block">🏆</span>
+                          <p className="font-black text-[11px] uppercase tracking-wide">Course Completed!</p>
+                          <p className="text-[10px] font-semibold text-slate-300">You have successfully mastered all topics and practical sandboxes in this program! Claim your ISO certification now in the top-right corner of the workspace.</p>
+                        </div>
+                      )}
+
+                      {!quizIsCorrect && (
+                        <button
+                          onClick={() => {
+                            setQuizSubmitted(false);
+                            setSelectedQuizOption(null);
+                          }}
+                          className="mt-3 text-[10px] font-black uppercase tracking-wider text-rose-400 hover:underline cursor-pointer"
+                        >
+                          Retry assessment
+                        </button>
+                      )}
+                    </div>
+                  ) : (
+                    <button
+                      disabled={selectedQuizOption === null}
+                      onClick={() => handleQuizSubmit(activeContent.quiz.answerIdx)}
+                      className="w-full bg-[#7c3aed] hover:bg-[#6d28d9] disabled:bg-[#1a1435] disabled:text-slate-500 text-white font-black text-xs uppercase tracking-wider py-3 rounded-xl transition-all cursor-pointer shadow-md disabled:cursor-not-allowed"
+                    >
+                      Submit Answer
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
 
           </div>
 
@@ -908,12 +1658,7 @@ Keep in mind:
               <div className="bg-[#1a143c] border-b border-[#2a1d59] p-4 flex items-center justify-between shrink-0">
                 <div className="flex items-center gap-2.5">
                   <div className="w-8 h-8 rounded-lg overflow-hidden border border-[#3b2a80] shrink-0">
-                    <img 
-                      src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=120&auto=format&fit=crop" 
-                      alt="Arohi" 
-                      className="w-full h-full object-cover"
-                      referrerPolicy="no-referrer"
-                    />
+                    <ArohiAvatar className="w-full h-full" />
                   </div>
                   <div>
                     <h4 className="text-xs font-black text-white leading-none">Arohi Study Tutor</h4>
@@ -1340,7 +2085,7 @@ Keep in mind:
                 ></div>
               </div>
               <p className="text-[10px] text-slate-400 font-semibold leading-relaxed">
-                Active enrollments receive continuous live mentoring guidelines from AROHI AI, including resume tailoring & mock interviews.
+                Get AROHI AI priority classroom mentoring completely <strong>FREE of cost</strong> with your course package! Enroll in any program and pay in easy monthly breakups.
               </p>
             </div>
 
@@ -1475,7 +2220,6 @@ Keep in mind:
                           onClick={() => {
                             setActiveLearningCourse(c);
                             setActiveModuleIndex(0);
-                            setActiveModuleProgress(0);
                           }}
                           className="px-3 py-2 bg-gradient-to-r from-[#00e676] to-[#05b35c] hover:from-[#09f381] hover:to-[#07ca69] text-slate-950 text-[10px] font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer shadow-md shadow-[#00e676]/15 hover:scale-[1.03] active:scale-95 flex items-center gap-1"
                         >
@@ -1657,7 +2401,6 @@ Keep in mind:
                             onClick={() => {
                               setActiveLearningCourse(selectedCourse);
                               setActiveModuleIndex(0);
-                              setActiveModuleProgress(0);
                               setSelectedCourse(null);
                             }}
                             className="px-5 py-3 bg-gradient-to-r from-emerald-500 to-[#00e676] hover:from-emerald-600 hover:to-emerald-400 text-white font-black text-[10px] uppercase tracking-wider rounded-xl transition-all cursor-pointer shadow-md flex items-center gap-1.5"

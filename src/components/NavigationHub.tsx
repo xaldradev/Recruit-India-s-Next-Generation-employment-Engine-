@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Compass, Home, Briefcase, BookOpen, Sparkles, User, Landmark, Phone, ChevronUp, X, ArrowLeft, Shield } from 'lucide-react';
+import { Compass, Home, Briefcase, BookOpen, GraduationCap, Sparkles, User, Landmark, Phone, ChevronUp, X, ArrowLeft, Shield } from 'lucide-react';
 import { Posting } from '../types';
 
 interface NavigationHubProps {
@@ -28,6 +28,7 @@ export default function NavigationHub({ activeTab, setActiveTab, prevTab, setSel
     { id: 'home', label: 'Ecosystem Home', icon: Home, color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' },
     { id: 'jobs', label: 'Jobs & Openings', icon: Briefcase, color: 'text-blue-400 bg-blue-500/10 border-blue-500/20' },
     { id: 'courses', label: 'Skills & Courses', icon: BookOpen, color: 'text-violet-400 bg-violet-500/10 border-violet-500/20' },
+    { id: 'syllabus', label: 'School Syllabus 1-10', icon: GraduationCap, color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' },
     { id: 'business', label: 'Business Guides', icon: Landmark, color: 'text-amber-400 bg-amber-500/10 border-amber-500/20' },
     { id: 'arohi', label: 'Arohi AI Chat', icon: Sparkles, color: 'text-pink-400 bg-pink-500/10 border-pink-500/20' },
     { id: 'dashboard', label: 'User Dashboard', icon: User, color: 'text-teal-400 bg-teal-500/10 border-teal-500/20' },

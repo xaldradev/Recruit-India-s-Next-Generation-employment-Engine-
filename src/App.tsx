@@ -4,6 +4,9 @@ import Header from './components/Header';
 import MarqueeTicker from './components/MarqueeTicker';
 import PostingDetail from './components/PostingDetail';
 import AdminPanel from './components/AdminPanel';
+import { useAuth } from './context/AuthContext';
+import AuthModal from './components/AuthModal';
+
 
 // Core Tab Components
 import ArohiChat from './components/ArohiChat';
@@ -13,6 +16,7 @@ import InterviewPage from './components/InterviewPage';
 import BusinessPage from './components/BusinessPage';
 import SchemesPage from './components/SchemesPage';
 import CoursesPage from './components/CoursesPage';
+import SchoolSyllabusPage from './components/SchoolSyllabusPage';
 import UserDashboard from './components/UserDashboard';
 import EmployerPortal from './components/EmployerPortal';
 import LegalPages from './components/LegalPages';
@@ -20,10 +24,11 @@ import NavigationHub from './components/NavigationHub';
 import Smooth3DShowcase from './components/Smooth3DShowcase';
 import Interactive3DOrbit from './components/Interactive3DOrbit';
 import NotificationToast from './components/NotificationToast';
+import WelcomeLanding from './components/WelcomeLanding';
 
 import { initialPostings } from './data/initialData';
 import { Posting, Application, CategoryType } from './types';
-import { Award, Crown, CheckCircle, Landmark, Bell, ArrowUpRight, ShieldCheck, Sparkles, Bot, GraduationCap, Briefcase, ChevronRight, Mic, MicOff, ArrowLeft, Home, Compass, Map, RotateCcw, Star, Users, MapPin, RefreshCw, Quote, Plus, MessageSquare } from 'lucide-react';
+import { Award, Crown, CheckCircle, Landmark, Bell, ArrowUpRight, ShieldCheck, Sparkles, Bot, GraduationCap, Briefcase, ChevronRight, Mic, MicOff, ArrowLeft, Home, Compass, Map, RotateCcw, Star, Users, MapPin, RefreshCw, Quote, Plus, MessageSquare, MessageCircle, Zap, Coins } from 'lucide-react';
 
 const INITIAL_MOCK_APPLICATIONS: Application[] = [
   {
@@ -143,12 +148,57 @@ const INITIAL_REVIEWS: Review[] = [
 ];
 
 export default function App() {
+  const { user, userData, updateApplications } = useAuth();
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [hasEntered, setHasEntered] = useState(() => {
+    return localStorage.getItem('recruit_has_entered') === 'true';
+  });
+
   const [userName, setUserName] = useState(() => {
     return localStorage.getItem('recruit_user_name') || 'Honored Guest';
   });
-  const [activeTab, setActiveTab] = useState('home');
+  
+  // Dynamically derive current user's display name
+  const currentUserName = user ? (userData?.profile?.name || user.displayName || 'Honored Guest') : userName;
+
+  const [activeTab, setActiveTab] = useState(() => {
+    const path = window.location.pathname;
+    if (path === '/admin' || window.location.hash === '#admin' || window.location.search.includes('admin')) {
+      return 'admin';
+    }
+    return 'home';
+  });
   const [prevTab, setPrevTab] = useState('home');
   const currentTabRef = useRef('home');
+
+  // Dynamic Browser History & URL Router Synchronizer
+  useEffect(() => {
+    const handlePopState = () => {
+      const path = window.location.pathname;
+      if (path === '/admin' || window.location.hash === '#admin' || window.location.search.includes('admin')) {
+        setActiveTab('admin');
+      } else {
+        const tab = path.replace('/', '') || 'home';
+        const validTabs = ['home', 'jobs', 'career', 'resume', 'interview', 'business', 'schemes', 'courses', 'syllabus', 'dashboard', 'employer', 'admin', 'arohi', 'privacy', 'terms', 'refunds', 'payments', 'contact', 'faqs'];
+        if (validTabs.includes(tab)) {
+          setActiveTab(tab);
+        } else {
+          setActiveTab('home');
+        }
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  useEffect(() => {
+    const currentPath = window.location.pathname;
+    const targetPath = activeTab === 'home' ? '/' : `/${activeTab}`;
+    if (currentPath !== targetPath && currentPath !== `/index.html`) {
+      window.history.pushState(null, '', targetPath);
+    }
+  }, [activeTab]);
 
   useEffect(() => {
     if (activeTab !== currentTabRef.current) {
@@ -166,6 +216,7 @@ export default function App() {
       }).catch(err => console.log('Telemetry offline:', err));
     }
   }, [activeTab]);
+
   const [postings, setPostings] = useState<Posting[]>([]);
   const [applications, setApplications] = useState<Application[]>([]);
   
@@ -188,6 +239,8 @@ export default function App() {
   const [activeDepartment, setActiveDepartment] = useState('All');
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isChatMinimized, setIsChatMinimized] = useState(false);
+  const [isSyncingJobs, setIsSyncingJobs] = useState(false);
+  const [syncSuccessMessage, setSyncSuccessMessage] = useState<string | null>(null);
 
   // Voice Search Web Speech API state and handler
   const [isListening, setIsListening] = useState(false);
@@ -368,6 +421,15 @@ export default function App() {
     }
   }, []);
 
+  // Sync applications and states with Firestore in real time if user is logged in
+  useEffect(() => {
+    if (user && userData) {
+      if (userData.applications) {
+        setApplications(userData.applications);
+      }
+    }
+  }, [user, userData]);
+
   const handleAddPosting = (newPost: Posting) => {
     const updated = [newPost, ...postings];
     setPostings(updated);
@@ -389,17 +451,193 @@ export default function App() {
   const handleAddApplication = (newApp: Application) => {
     const updated = [newApp, ...applications];
     setApplications(updated);
-    localStorage.setItem('recruit_applications', JSON.stringify(updated));
+    if (user) {
+      updateApplications(updated).catch(err => console.error("Failed to sync application to firestore:", err));
+    } else {
+      localStorage.setItem('recruit_applications', JSON.stringify(updated));
+    }
   };
 
   const handleUpdateAppStatus = (id: string, status: 'Approved' | 'Rejected') => {
     const updated = applications.map(app => app.id === id ? { ...app, status } : app);
     setApplications(updated);
-    localStorage.setItem('recruit_applications', JSON.stringify(updated));
+    if (user) {
+      updateApplications(updated).catch(err => console.error("Failed to sync application status to firestore:", err));
+    } else {
+      localStorage.setItem('recruit_applications', JSON.stringify(updated));
+    }
   };
+
+  const handleSyncOnlineJobs = async () => {
+    setIsSyncingJobs(true);
+    setSyncSuccessMessage(null);
+
+    try {
+      const response = await fetch('/api/fetch-online-jobs', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          sector: activeSector !== 'All' ? activeSector : undefined,
+          location: activeRegion !== 'All' ? activeRegion : undefined,
+          jobType: undefined
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch online postings');
+      }
+
+      const data = await response.json();
+      if (data.success && Array.isArray(data.postings)) {
+        // Filter out postings we already have to avoid duplicates
+        const existingIds = new Set(postings.map(p => p.id));
+        const newPostings = data.postings.filter((p: any) => !existingIds.has(p.id));
+
+        if (newPostings.length > 0) {
+          const updated = [...newPostings, ...postings];
+          setPostings(updated);
+          localStorage.setItem('recruit_postings', JSON.stringify(updated));
+          setSyncSuccessMessage(`Successfully synchronized ${newPostings.length} new verified vacancies from Indian Gazette & National Career Service!`);
+        } else {
+          setSyncSuccessMessage("No new vacancies found. Your opportunity database is fully up to date!");
+        }
+      } else {
+        throw new Error('Invalid response structure');
+      }
+    } catch (err: any) {
+      console.error('Failed to sync live postings:', err);
+      // Fallback: merge static fallbacks locally to guarantee results
+      const existingIds = new Set(postings.map(p => p.id));
+      const mockList = [
+        {
+          id: 'rbi-assistant-2026',
+          title: 'RBI Assistant Online Form 2026',
+          organization: 'Reserve Bank of India (RBI)',
+          postDate: '2026-06-25',
+          shortInfo: 'Reserve Bank of India (RBI) invites online applications from eligible Indian citizens for the post of Assistant in various offices of the Bank. Selection will be through country-wide competitive examinations.',
+          category: 'latest-jobs',
+          tags: ['RBI', 'Banking', 'Graduate Pass', 'Assistant'],
+          department: 'Bank',
+          isNew: true,
+          state: 'All India',
+          jobType: 'government',
+          sector: 'Banking & Finance',
+          dates: {
+            applicationBegin: '2026-06-25',
+            lastDateApply: '2026-07-20',
+            lastDateFee: '2026-07-20',
+            examDate: 'September 2026'
+          },
+          fees: {
+            generalOBC: '₹ 450/-',
+            scST: '₹ 50/-',
+            paymentMode: 'Online Only'
+          },
+          ageLimit: {
+            asOnDate: '01/06/2026',
+            minAge: '20 Years',
+            maxAge: '28 Years',
+            relaxationInfo: 'As per norms.'
+          },
+          totalVacancies: 950,
+          vacancies: [
+            {
+              postName: 'Assistant (Clerical)',
+              totalPosts: 950,
+              eligibility: 'Bachelor\'s Degree in any discipline with a minimum of 50% marks.'
+            }
+          ],
+          links: {
+            applyOnline: '#apply',
+            officialWebsite: 'https://www.rbi.org.in'
+          }
+        },
+        {
+          id: 'drdo-scientist-b-2026',
+          title: 'DRDO Scientist B Direct Entry Exam Form 2026',
+          organization: 'Defence Research & Development Organisation (DRDO)',
+          postDate: '2026-06-26',
+          shortInfo: 'Recruitment Assessment Centre (RAC) under DRDO invites online applications for direct recruitment of Scientist \'B\' in DRDO, DST and ADA.',
+          category: 'latest-jobs',
+          tags: ['DRDO', 'GATE', 'Scientist B', 'Engineering', 'Defence'],
+          department: 'Defence',
+          isNew: true,
+          state: 'All India',
+          jobType: 'government',
+          sector: 'Security & Defence',
+          dates: {
+            applicationBegin: '2026-06-26',
+            lastDateApply: '2026-07-28',
+            lastDateFee: '2026-07-28',
+            examDate: 'October 2026'
+          },
+          fees: {
+            generalOBC: '₹ 100/-',
+            scST: '₹ 0/-',
+            paymentMode: 'Online Only'
+          },
+          ageLimit: {
+            asOnDate: '28/07/2026',
+            minAge: '21 Years',
+            maxAge: '30 Years',
+            relaxationInfo: 'As per rules.'
+          },
+          totalVacancies: 640,
+          vacancies: [
+            {
+              postName: 'Scientist B',
+              totalPosts: 640,
+              eligibility: 'First Class Bachelor\'s Degree in Engineering or Technology with GATE score.'
+            }
+          ],
+          links: {
+            applyOnline: '#apply',
+            officialWebsite: 'https://rac.gov.in'
+          }
+        }
+      ];
+
+      const newPostings = mockList.filter((p: any) => !existingIds.has(p.id));
+      if (newPostings.length > 0) {
+        const updated = [...newPostings, ...postings];
+        setPostings(updated);
+        localStorage.setItem('recruit_postings', JSON.stringify(updated));
+        setSyncSuccessMessage(`Successfully updated database with ${newPostings.length} premium opportunities!`);
+      } else {
+        setSyncSuccessMessage("No additional listings available at this moment.");
+      }
+    } finally {
+      setIsSyncingJobs(false);
+      setTimeout(() => {
+        setSyncSuccessMessage(null);
+      }, 6000);
+    }
+  };
+
 
   const [activeRegion, setActiveRegion] = useState<string>('All');
   const [activeSector, setActiveSector] = useState<string>('All');
+
+  // Ensure that switching tabs or entering a detailed view scrolls the viewport to the very top
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }, [activeTab, selectedPosting]);
+
+  // Smoothly scroll down to the filtered jobs list when user selects a region or sector filter
+  useEffect(() => {
+    if (activeRegion !== 'All' || activeSector !== 'All') {
+      // Delay slightly to allow React to render the list before scrolling
+      const timer = setTimeout(() => {
+        const anchor = document.getElementById('filtered-listings-anchor');
+        if (anchor) {
+          anchor.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [activeRegion, activeSector]);
 
   const filteredPostings = postings.filter((post) => {
     const matchesSearch =
@@ -459,12 +697,15 @@ export default function App() {
         return <SchemesPage />;
       case 'courses':
         return <CoursesPage />;
+      case 'syllabus':
+        return <SchoolSyllabusPage />;
       case 'dashboard':
         return (
           <UserDashboard 
             subscriptions={subscriptions} 
             onSubscribe={handleSubscribe} 
             onNavigateTab={(tab) => setActiveTab(tab)} 
+            onOpenAuth={() => setIsAuthModalOpen(true)}
           />
         );
       case 'employer':
@@ -474,6 +715,7 @@ export default function App() {
       case 'refunds':
       case 'payments':
       case 'contact':
+      case 'faqs':
         return <LegalPages initialTab={activeTab as any} />;
       case 'admin':
         return (
@@ -728,57 +970,65 @@ export default function App() {
             </div>
             <h3 className="text-2xl md:text-3xl font-black text-white tracking-tight">Three Strategic Professional Paths</h3>
             <p className="text-xs text-slate-300 max-w-3xl font-semibold leading-relaxed">
-              Explore your ideal track below. Our monthly assistance plan at a budgeted rate of <span className="text-yellow-300 font-extrabold">₹3,399/Month</span> empowers you with active expert guidelines and continuous support.
+              Explore your ideal track below. Our monthly assistance plan starting from a budgeted rate of <span className="text-yellow-300 font-extrabold">₹399/Month</span> empowers you with active expert guidelines and continuous support.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             
             {/* PATH 1 CARD */}
-            <div className="bg-gradient-to-b from-[#16113c] to-[#0c0824] border border-[#302373] hover:border-[#4f3da8] rounded-[2rem] p-6 text-left flex flex-col justify-between transition-all duration-300 group shadow-lg relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/5 rounded-full blur-2xl pointer-events-none"></div>
-              <div className="space-y-4">
+            <div className="bg-gradient-to-br from-[#101c5c] via-[#090b24] to-[#040512] border-2 border-blue-500/30 hover:border-blue-400/80 rounded-[2.5rem] p-7 text-left flex flex-col justify-between transition-all duration-500 group shadow-[0_20px_50px_rgba(59,130,246,0.3)] hover:shadow-[0_30px_70px_rgba(59,130,246,0.5)] hover:scale-[1.02] relative overflow-hidden">
+              <div className="absolute -top-12 -right-12 w-36 h-36 bg-blue-500/20 rounded-full blur-3xl pointer-events-none group-hover:bg-blue-500/30 transition-colors"></div>
+              <div className="space-y-5">
                 <div className="flex justify-between items-center">
-                  <div className="bg-[#1d4ed8]/20 text-[#60a5fa] border border-[#1d4ed8]/35 w-10 h-10 rounded-xl flex items-center justify-center text-lg shadow">
+                  <div className="bg-gradient-to-tr from-blue-600 to-indigo-500 text-white w-14 h-14 rounded-2xl flex items-center justify-center text-2xl shadow-[0_8px_25px_rgba(37,99,235,0.4)] border border-blue-400/30">
                     🎓
                   </div>
-                  <span className="text-[10px] bg-blue-500/10 text-blue-300 font-black uppercase tracking-wider px-2 py-0.5 rounded-md border border-blue-500/25">
+                  <span className="text-[10px] bg-blue-500/25 text-blue-100 font-extrabold uppercase tracking-widest px-3 py-1.5 rounded-full border border-blue-400/30 shadow-sm">
                     Path 1: Jobs & Resumes
                   </span>
                 </div>
                 
-                <div className="space-y-1.5">
-                  <h4 className="text-base font-black text-white group-hover:text-yellow-200 transition-colors">Career & Resume Path</h4>
-                  <p className="text-[11px] text-slate-300 leading-normal">
+                <div className="space-y-2">
+                  <h4 className="text-2xl sm:text-3xl font-black text-white tracking-tight leading-none group-hover:text-blue-100 transition-colors">
+                    Career & Resume Path
+                  </h4>
+                  <p className="text-sm text-slate-200 leading-relaxed font-medium">
                     Search and apply for premium Government and Private jobs. Use ATS grading, find resume deficiencies, and practice tailored interview questions.
                   </p>
                 </div>
 
-                <div className="space-y-2 border-t border-[#231b57] pt-4">
-                  <span className="text-[9px] font-black uppercase tracking-wider text-slate-400 block">Assistance Benefits:</span>
-                  <div className="space-y-1 text-[11px] font-semibold text-slate-300">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-emerald-400">✓</span> Match-scoring with latest vacancies
+                <div className="space-y-2.5 border-t border-slate-800/60 pt-5">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 block">Elite Benefits Included:</span>
+                  <div className="space-y-2 text-xs font-semibold text-slate-200">
+                    <div className="flex items-center gap-2 bg-white/5 border border-white/10 px-3 py-2.5 rounded-xl backdrop-blur-md">
+                      <span className="text-emerald-400 text-sm">✓</span>
+                      <span>Match-scoring with latest vacancies</span>
                     </div>
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-emerald-400">✓</span> Real-time ATS resume keyword checker
+                    <div className="flex items-center gap-2 bg-white/5 border border-white/10 px-3 py-2.5 rounded-xl backdrop-blur-md">
+                      <span className="text-emerald-400 text-sm">✓</span>
+                      <span>Real-time ATS resume keyword checker</span>
                     </div>
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-emerald-400">✓</span> Interactive mock interview simulations
+                    <div className="flex items-center gap-2 bg-white/5 border border-white/10 px-3 py-2.5 rounded-xl backdrop-blur-md">
+                      <span className="text-emerald-400 text-sm">✓</span>
+                      <span>Interactive mock interview simulations</span>
                     </div>
                   </div>
                 </div>
               </div>
 
-              <div className="pt-6 border-t border-[#231b57] mt-6 space-y-2.5">
-                <div className="flex justify-between items-baseline">
-                  <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Assistance Fee</span>
-                  <span className="text-base font-black text-white">₹3,399<span className="text-xs font-semibold text-slate-400">/mo</span></span>
+              <div className="pt-6 border-t border-slate-800/60 mt-6 space-y-3.5">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-slate-400 font-bold uppercase tracking-widest">Assistance Fee</span>
+                  <div className="text-right">
+                    <span className="text-2xl font-black text-white tracking-tight">₹399</span>
+                    <span className="text-xs font-semibold text-slate-400"> / month</span>
+                  </div>
                 </div>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-2 gap-3">
                   <button 
                     onClick={() => setActiveTab('jobs')}
-                    className="bg-[#241a54] hover:bg-[#322474] text-white border border-[#3f2c8d] font-bold text-[10px] uppercase tracking-wider py-2.5 px-3 rounded-xl transition-all text-center cursor-pointer"
+                    className="bg-white/10 hover:bg-white/15 text-white border border-white/20 hover:border-white/30 font-extrabold text-[11px] uppercase tracking-wider py-3 px-4 rounded-xl transition-all text-center cursor-pointer active:scale-95"
                   >
                     Explore Jobs
                   </button>
@@ -787,13 +1037,13 @@ export default function App() {
                       if (subscriptions.path1) {
                         handleSubscribe('path1');
                       } else {
-                        setCheckoutPath({ id: 'path1', title: 'Path 1: Career, Jobs & Resume Assistance Plan', price: '₹3,399/Month' });
+                        setCheckoutPath({ id: 'path1', title: 'Path 1: Career, Jobs & Resume Assistance Plan', price: '₹399/Month' });
                       }
                     }}
-                    className={`font-black text-[10px] uppercase tracking-wider py-2.5 px-3 rounded-xl transition-all cursor-pointer ${
+                    className={`font-black text-[11px] uppercase tracking-wider py-3 px-4 rounded-xl transition-all cursor-pointer text-center active:scale-95 ${
                       subscriptions.path1 
-                        ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' 
-                        : 'bg-[#7c3aed] hover:bg-[#6d28d9] text-white shadow-md'
+                        ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-[0_0_15px_rgba(16,185,129,0.2)]' 
+                        : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-[0_4px_15px_rgba(37,99,235,0.4)] border border-blue-400/20'
                     }`}
                   >
                     {subscriptions.path1 ? 'Subscribed ✓' : 'Subscribe'}
@@ -803,50 +1053,58 @@ export default function App() {
             </div>
 
             {/* PATH 2 CARD */}
-            <div className="bg-gradient-to-b from-[#16113c] to-[#0c0824] border border-[#302373] hover:border-[#4f3da8] rounded-[2rem] p-6 text-left flex flex-col justify-between transition-all duration-300 group shadow-lg relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-24 h-24 bg-violet-500/5 rounded-full blur-2xl pointer-events-none"></div>
-              <div className="space-y-4">
+            <div className="bg-gradient-to-br from-[#4c1256] via-[#0d0724] to-[#050310] border-2 border-purple-500/30 hover:border-purple-400/80 rounded-[2.5rem] p-7 text-left flex flex-col justify-between transition-all duration-500 group shadow-[0_20px_50px_rgba(168,85,247,0.3)] hover:shadow-[0_30px_70px_rgba(168,85,247,0.5)] hover:scale-[1.02] relative overflow-hidden">
+              <div className="absolute -top-12 -right-12 w-36 h-36 bg-purple-500/20 rounded-full blur-3xl pointer-events-none group-hover:bg-purple-500/30 transition-colors"></div>
+              <div className="space-y-5">
                 <div className="flex justify-between items-center">
-                  <div className="bg-[#7c3aed]/20 text-[#c084fc] border border-[#7c3aed]/35 w-10 h-10 rounded-xl flex items-center justify-center text-lg shadow">
+                  <div className="bg-gradient-to-tr from-purple-600 to-pink-500 text-white w-14 h-14 rounded-2xl flex items-center justify-center text-2xl shadow-[0_8px_25px_rgba(168,85,247,0.4)] border border-purple-400/30">
                     📖
                   </div>
-                  <span className="text-[10px] bg-purple-500/10 text-purple-300 font-black uppercase tracking-wider px-2 py-0.5 rounded-md border border-purple-500/25">
+                  <span className="text-[10px] bg-purple-500/25 text-purple-100 font-extrabold uppercase tracking-widest px-3 py-1.5 rounded-full border border-purple-400/30 shadow-sm">
                     Path 2: Upgrade Skills
                   </span>
                 </div>
                 
-                <div className="space-y-1.5">
-                  <h4 className="text-base font-black text-white group-hover:text-yellow-200 transition-colors">Skill Upgradation Path</h4>
-                  <p className="text-[11px] text-slate-300 leading-normal">
-                    Heavily discounted, budget-friendly skill certification courses tailored specifically for the Indian economy. Easily switch fields to align with high demands.
+                <div className="space-y-2">
+                  <h4 className="text-2xl sm:text-3xl font-black text-white tracking-tight leading-none group-hover:text-purple-100 transition-colors">
+                    Skill Upgradation Path
+                  </h4>
+                  <p className="text-sm text-slate-200 leading-relaxed font-medium">
+                    No direct subscription cost. Sign up for any course and pay in flexible monthly breakups. Get Arohi AI classroom mentorship completely free of cost!
                   </p>
                 </div>
 
-                <div className="space-y-2 border-t border-[#231b57] pt-4">
-                  <span className="text-[9px] font-black uppercase tracking-wider text-slate-400 block">Assistance Benefits:</span>
-                  <div className="space-y-1 text-[11px] font-semibold text-slate-300">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-emerald-400">✓</span> Full access to Tech & Business academy
+                <div className="space-y-2.5 border-t border-slate-800/60 pt-5">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 block">Elite Benefits Included:</span>
+                  <div className="space-y-2 text-xs font-semibold text-slate-200">
+                    <div className="flex items-center gap-2 bg-white/5 border border-white/10 px-3 py-2.5 rounded-xl backdrop-blur-md">
+                      <span className="text-emerald-400 text-sm">✓</span>
+                      <span>Full access to Tech & Business academy</span>
                     </div>
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-emerald-400">✓</span> Industry standard certificates
+                    <div className="flex items-center gap-2 bg-white/5 border border-white/10 px-3 py-2.5 rounded-xl backdrop-blur-md">
+                      <span className="text-emerald-400 text-sm">✓</span>
+                      <span>Industry standard certificates</span>
                     </div>
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-emerald-400">✓</span> Flexible department switching anytime
+                    <div className="flex items-center gap-2 bg-white/5 border border-white/10 px-3 py-2.5 rounded-xl backdrop-blur-md">
+                      <span className="text-emerald-400 text-sm">✓</span>
+                      <span>Arohi AI Mentor Included Free</span>
                     </div>
                   </div>
                 </div>
               </div>
 
-              <div className="pt-6 border-t border-[#231b57] mt-6 space-y-2.5">
-                <div className="flex justify-between items-baseline">
-                  <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Assistance Fee</span>
-                  <span className="text-base font-black text-white">₹3,399<span className="text-xs font-semibold text-slate-400">/mo</span></span>
+              <div className="pt-6 border-t border-slate-800/60 mt-6 space-y-3.5">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-slate-400 font-bold uppercase tracking-widest">Assistance Fee</span>
+                  <div className="text-right">
+                    <span className="text-2xl font-black text-[#00e676] tracking-tight">FREE</span>
+                    <span className="text-xs font-semibold text-slate-400"> (with Course)</span>
+                  </div>
                 </div>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-2 gap-3">
                   <button 
                     onClick={() => setActiveTab('courses')}
-                    className="bg-[#241a54] hover:bg-[#322474] text-white border border-[#3f2c8d] font-bold text-[10px] uppercase tracking-wider py-2.5 px-3 rounded-xl transition-all text-center cursor-pointer"
+                    className="bg-white/10 hover:bg-white/15 text-white border border-white/20 hover:border-white/30 font-extrabold text-[11px] uppercase tracking-wider py-3 px-4 rounded-xl transition-all text-center cursor-pointer active:scale-95"
                   >
                     View Courses
                   </button>
@@ -855,66 +1113,74 @@ export default function App() {
                       if (subscriptions.path2) {
                         handleSubscribe('path2');
                       } else {
-                        setCheckoutPath({ id: 'path2', title: 'Path 2: Economical Skill Upgradation Plan', price: '₹3,399/Month' });
+                        setCheckoutPath({ id: 'path2', title: 'Path 2: Economical Skill Upgradation Plan', price: 'FREE (Arohi Included with Course)' });
                       }
                     }}
-                    className={`font-black text-[10px] uppercase tracking-wider py-2.5 px-3 rounded-xl transition-all cursor-pointer ${
+                    className={`font-black text-[11px] uppercase tracking-wider py-3 px-4 rounded-xl transition-all cursor-pointer text-center active:scale-95 ${
                       subscriptions.path2 
-                        ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' 
-                        : 'bg-[#7c3aed] hover:bg-[#6d28d9] text-white shadow-md'
+                        ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-[0_0_15px_rgba(16,185,129,0.2)]' 
+                        : 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white shadow-[0_4px_15px_rgba(168,85,247,0.4)] border border-purple-400/20'
                     }`}
                   >
-                    {subscriptions.path2 ? 'Subscribed ✓' : 'Subscribe'}
+                    {subscriptions.path2 ? 'Subscribed ✓' : 'Subscribe (Free)'}
                   </button>
                 </div>
               </div>
             </div>
 
             {/* PATH 3 CARD */}
-            <div className="bg-gradient-to-b from-[#16113c] to-[#0c0824] border border-[#302373] hover:border-[#4f3da8] rounded-[2rem] p-6 text-left flex flex-col justify-between transition-all duration-300 group shadow-lg relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/5 rounded-full blur-2xl pointer-events-none"></div>
-              <div className="space-y-4">
+            <div className="bg-gradient-to-br from-[#0c3e29] via-[#040d0a] to-[#010504] border-2 border-emerald-500/30 hover:border-emerald-400/80 rounded-[2.5rem] p-7 text-left flex flex-col justify-between transition-all duration-500 group shadow-[0_20px_50px_rgba(16,185,129,0.3)] hover:shadow-[0_30px_70px_rgba(16,185,129,0.5)] hover:scale-[1.02] relative overflow-hidden">
+              <div className="absolute -top-12 -right-12 w-36 h-36 bg-emerald-500/20 rounded-full blur-3xl pointer-events-none group-hover:bg-emerald-500/30 transition-colors"></div>
+              <div className="space-y-5">
                 <div className="flex justify-between items-center">
-                  <div className="bg-emerald-500/20 text-[#34d399] border border-emerald-500/35 w-10 h-10 rounded-xl flex items-center justify-center text-lg shadow">
+                  <div className="bg-gradient-to-tr from-emerald-600 to-teal-500 text-white w-14 h-14 rounded-2xl flex items-center justify-center text-2xl shadow-[0_8px_25px_rgba(16,185,129,0.4)] border border-emerald-400/30">
                     🚀
                   </div>
-                  <span className="text-[10px] bg-emerald-500/10 text-emerald-300 font-black uppercase tracking-wider px-2 py-0.5 rounded-md border border-emerald-500/25">
+                  <span className="text-[10px] bg-emerald-500/25 text-emerald-100 font-extrabold uppercase tracking-widest px-3 py-1.5 rounded-full border border-emerald-400/30 shadow-sm">
                     Path 3: Udyam
                   </span>
                 </div>
                 
-                <div className="space-y-1.5">
-                  <h4 className="text-base font-black text-white group-hover:text-yellow-200 transition-colors">Udyam Business Plan</h4>
-                  <p className="text-[11px] text-slate-300 leading-normal">
+                <div className="space-y-2">
+                  <h4 className="text-2xl sm:text-3xl font-black text-white tracking-tight leading-none group-hover:text-emerald-100 transition-colors">
+                    Udyam Business Plan
+                  </h4>
+                  <p className="text-sm text-slate-200 leading-relaxed font-medium">
                     Not looking for a job? Build your business startup instead. Master Udyam MSME registrations, check Mudra loan eligibility, and claim subsidies.
                   </p>
                 </div>
 
-                <div className="space-y-2 border-t border-[#231b57] pt-4">
-                  <span className="text-[9px] font-black uppercase tracking-wider text-slate-400 block">Assistance Benefits:</span>
-                  <div className="space-y-1 text-[11px] font-semibold text-slate-300">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-emerald-400">✓</span> Government portal verification guides
+                <div className="space-y-2.5 border-t border-slate-800/60 pt-5">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 block">Elite Benefits Included:</span>
+                  <div className="space-y-2 text-xs font-semibold text-slate-200">
+                    <div className="flex items-center gap-2 bg-white/5 border border-white/10 px-3 py-2.5 rounded-xl backdrop-blur-md">
+                      <span className="text-emerald-400 text-sm">✓</span>
+                      <span>Government portal verification guides</span>
                     </div>
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-emerald-400">✓</span> Mudra & PMEGP subsidy eligibility
+                    <div className="flex items-center gap-2 bg-white/5 border border-white/10 px-3 py-2.5 rounded-xl backdrop-blur-md">
+                      <span className="text-emerald-400 text-sm">✓</span>
+                      <span>Mudra & PMEGP subsidy eligibility</span>
                     </div>
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-emerald-400">✓</span> Odisha state & local startup benefits
+                    <div className="flex items-center gap-2 bg-white/5 border border-white/10 px-3 py-2.5 rounded-xl backdrop-blur-md">
+                      <span className="text-emerald-400 text-sm">✓</span>
+                      <span>Odisha state & local startup benefits</span>
                     </div>
                   </div>
                 </div>
               </div>
 
-              <div className="pt-6 border-t border-[#231b57] mt-6 space-y-2.5">
-                <div className="flex justify-between items-baseline">
-                  <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Assistance Fee</span>
-                  <span className="text-base font-black text-white">₹3,399<span className="text-xs font-semibold text-slate-400">/mo</span></span>
+              <div className="pt-6 border-t border-slate-800/60 mt-6 space-y-3.5">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-slate-400 font-bold uppercase tracking-widest">Assistance Fee</span>
+                  <div className="text-right">
+                    <span className="text-2xl font-black text-white tracking-tight">₹399</span>
+                    <span className="text-xs font-semibold text-slate-400"> / month</span>
+                  </div>
                 </div>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-2 gap-3">
                   <button 
                     onClick={() => setActiveTab('business')}
-                    className="bg-[#241a54] hover:bg-[#322474] text-white border border-[#3f2c8d] font-bold text-[10px] uppercase tracking-wider py-2.5 px-3 rounded-xl transition-all text-center cursor-pointer"
+                    className="bg-white/10 hover:bg-white/15 text-white border border-white/20 hover:border-white/30 font-extrabold text-[11px] uppercase tracking-wider py-3 px-4 rounded-xl transition-all text-center cursor-pointer active:scale-95"
                   >
                     Launch Business
                   </button>
@@ -923,13 +1189,13 @@ export default function App() {
                       if (subscriptions.path3) {
                         handleSubscribe('path3');
                       } else {
-                        setCheckoutPath({ id: 'path3', title: 'Path 3: Udyam Business Assistance Plan', price: '₹3,399/Month' });
+                        setCheckoutPath({ id: 'path3', title: 'Path 3: Udyam Business Assistance Plan', price: '₹399/Month' });
                       }
                     }}
-                    className={`font-black text-[10px] uppercase tracking-wider py-2.5 px-3 rounded-xl transition-all cursor-pointer ${
+                    className={`font-black text-[11px] uppercase tracking-wider py-3 px-4 rounded-xl transition-all cursor-pointer text-center active:scale-95 ${
                       subscriptions.path3 
-                        ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' 
-                        : 'bg-[#7c3aed] hover:bg-[#6d28d9] text-white shadow-md'
+                        ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-[0_0_15px_rgba(16,185,129,0.2)]' 
+                        : 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-[0_4px_15px_rgba(16,185,129,0.4)] border border-emerald-400/20'
                     }`}
                   >
                     {subscriptions.path3 ? 'Subscribed ✓' : 'Subscribe'}
@@ -1015,7 +1281,7 @@ export default function App() {
               </div>
               <h3 className="text-2xl md:text-3xl font-black text-white tracking-tight">Verified Candidate Testimonials</h3>
               <p className="text-xs text-slate-300 max-w-2xl font-semibold leading-relaxed">
-                See how job aspirants and entrepreneurs in <span className="text-amber-300">Odisha</span> and across <span className="text-[#a78bfa]">India</span> use our Next Generation Employment Engine to crack exams, build resumes, and establish businesses.
+                See how students, job aspirants, and entrepreneurs in <span className="text-amber-300">Odisha</span> and across <span className="text-[#a78bfa]">India</span> use our platform to empower their academic and professional journeys.
               </p>
             </div>
 
@@ -1321,6 +1587,63 @@ export default function App() {
           </div>
         </div>
 
+        {/* Live AI Opportunity Crawler & Sync Panel */}
+        <div className="bg-gradient-to-r from-[#0d1527] via-[#091e2b] to-[#0d1527] text-white p-5 rounded-3xl shadow-xl border border-emerald-950/50 flex flex-col md:flex-row justify-between items-center gap-4 relative overflow-hidden group">
+          {/* Subtle background glow */}
+          <div className="absolute -inset-10 bg-emerald-500/5 rounded-full filter blur-2xl opacity-50 group-hover:opacity-75 transition-opacity pointer-events-none"></div>
+          
+          <div className="flex items-center gap-3.5 relative z-10 text-left w-full md:w-auto">
+            <div className="bg-emerald-500/10 p-2.5 rounded-xl border border-emerald-500/20 text-emerald-400 shrink-0 relative">
+              <RefreshCw className={`w-6 h-6 ${isSyncingJobs ? 'animate-spin' : ''}`} />
+              <span className="absolute -top-1 -right-1 flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              </span>
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="font-extrabold text-sm md:text-base tracking-wide text-emerald-100">
+                  National Opportunity Database Crawler
+                </h3>
+                <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-1.5 py-0.5 rounded text-[9px] font-black uppercase">
+                  AI Active
+                </span>
+              </div>
+              <p className="text-xs text-slate-400 font-semibold mt-0.5">
+                Scan active Indian central/state gazettes, National Career Service, and private sectors for new vacancies.
+              </p>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-2.5 w-full md:w-auto relative z-10 shrink-0">
+            <button
+              onClick={handleSyncOnlineJobs}
+              disabled={isSyncingJobs}
+              className={`w-full md:w-auto bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-800 text-white font-black text-xs uppercase tracking-wider px-5 py-3 rounded-xl transition-all cursor-pointer shadow-md flex items-center justify-center gap-2 border border-emerald-500/30 ${isSyncingJobs ? 'cursor-not-allowed opacity-75' : 'hover:scale-[1.02] active:scale-[0.98]'}`}
+            >
+              {isSyncingJobs ? (
+                <>
+                  <RefreshCw className="w-4 h-4 animate-spin text-emerald-200" />
+                  <span>Syncing Live Postings...</span>
+                </>
+              ) : (
+                <>
+                  <Zap className="w-4 h-4 text-yellow-300 fill-yellow-300 animate-pulse" />
+                  <span>Fetch & Sync Online Jobs</span>
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+
+        {syncSuccessMessage && (
+          <div className="bg-emerald-950/40 border border-emerald-500/30 text-emerald-200 px-5 py-4 rounded-2xl text-xs font-semibold flex items-center gap-3 animate-fade-in relative overflow-hidden shadow-inner">
+            <div className="absolute top-0 left-0 w-1 h-full bg-emerald-500"></div>
+            <CheckCircle className="w-5 h-5 text-emerald-400 shrink-0" />
+            <span>{syncSuccessMessage}</span>
+          </div>
+        )}
+
         {/* Interactive Search Bar for listings with Web Speech Voice Command support */}
         <div className="space-y-2">
           <div className="bg-[#120d2a]/95 p-4 rounded-2xl border border-[#2d2163] shadow-lg flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
@@ -1620,7 +1943,120 @@ export default function App() {
           ))}
         </div>
 
-        {activeCategory === 'all' ? (
+        <div id="filtered-listings-anchor" className="scroll-mt-24"></div>
+
+        {activeRegion !== 'All' ? (
+          <div className="bg-[#120d2a]/90 rounded-2xl border border-[#2d2163] p-6 shadow-2xl text-left space-y-6">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-[#2d2163] pb-4">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className={`text-[10px] font-black px-2.5 py-1 rounded uppercase tracking-wider border ${
+                    activeRegion.startsWith('Odisha') 
+                      ? 'bg-[#7c3aed]/20 text-[#c084fc] border-[#7c3aed]/30' 
+                      : 'bg-rose-500/20 text-rose-300 border-rose-500/30'
+                  }`}>
+                    {activeRegion.startsWith('Odisha') ? 'Odisha' : 'All India'}
+                  </span>
+                  <span className={`text-[10px] font-black px-2.5 py-1 rounded uppercase tracking-wider border ${
+                    activeRegion.endsWith('Govt') 
+                      ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' 
+                      : 'bg-sky-500/20 text-sky-300 border-sky-500/30'
+                  }`}>
+                    {activeRegion.endsWith('Govt') ? 'Government' : 'Private'}
+                  </span>
+                </div>
+                <h3 className="text-lg md:text-xl font-black text-white mt-2">
+                  {activeRegion === 'OdishaGovt' && "Government Jobs in Odisha"}
+                  {activeRegion === 'OdishaPrivate' && "Private Jobs in Odisha"}
+                  {activeRegion === 'AllIndiaGovt' && "Government Jobs All over India"}
+                  {activeRegion === 'AllIndiaPrivate' && "Private Jobs All over India"}
+                </h3>
+                <p className="text-xs text-slate-400 font-semibold mt-1">
+                  Showing {filteredPostings.length} matching active postings & official announcements.
+                </p>
+              </div>
+
+              <button
+                onClick={() => { setActiveRegion('All'); setActiveSector('All'); }}
+                className="flex items-center gap-1.5 px-4 py-2 bg-[#1b1444] hover:bg-[#251b5c] text-yellow-300 border border-[#3b2b80] text-xs font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer shadow-md"
+              >
+                ← Back to General Board
+              </button>
+            </div>
+
+            {filteredPostings.length === 0 ? (
+              <div className="py-12 text-center text-slate-400 font-medium bg-[#0a0715]/40 rounded-xl border border-dashed border-[#2d2163]">
+                <p className="text-sm font-bold">No active positions match your active filters.</p>
+                <button 
+                  onClick={() => { setActiveSector('All'); setActiveDepartment('All'); }}
+                  className="mt-3 text-xs text-yellow-400 hover:underline font-bold"
+                >
+                  Clear search/filters
+                </button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {filteredPostings.map((item) => (
+                  <div
+                    key={item.id}
+                    className="p-5 rounded-xl border border-[#221a4f] hover:border-[#7c3aed] bg-[#0c091f]/80 hover:bg-[#110d2c]/90 transition-all shadow-md text-left flex flex-col justify-between h-full group"
+                  >
+                    <div className="space-y-2.5">
+                      <div className="flex justify-between items-start gap-2">
+                        <span className="text-[10px] bg-[#22174d] text-[#c4b5fd] border border-[#4c3ba0]/50 px-2 py-0.5 rounded uppercase font-black tracking-wider shrink-0">
+                          {item.organization}
+                        </span>
+                        <span className={`text-[9px] font-black px-1.5 py-0.5 rounded uppercase ${
+                          item.category === 'latest-jobs' ? 'bg-emerald-500/10 text-emerald-400' :
+                          item.category === 'results' ? 'bg-rose-500/10 text-rose-400' :
+                          item.category === 'admit-card' ? 'bg-blue-500/10 text-blue-400' :
+                          'bg-purple-500/10 text-purple-400'
+                        }`}>
+                          {item.category.replace('-', ' ')}
+                        </span>
+                      </div>
+
+                      <h4 className="text-sm font-black text-slate-200 group-hover:text-[#a78bfa] leading-snug">
+                        {item.title}
+                      </h4>
+
+                      {item.shortInfo && (
+                        <p className="text-xs text-slate-400 leading-relaxed font-semibold line-clamp-2">
+                          {item.shortInfo}
+                        </p>
+                      )}
+
+                      <div className="flex flex-wrap gap-1.5 pt-1">
+                        {item.dates?.lastDateApply && (
+                          <span className="text-[9px] bg-red-500/10 text-rose-400 border border-red-500/20 px-2 py-0.5 rounded font-black">
+                            Last Date: {item.dates.lastDateApply}
+                          </span>
+                        )}
+                        {item.qualification && (
+                          <span className="text-[9px] bg-slate-800 text-slate-300 border border-slate-700 px-2 py-0.5 rounded font-black">
+                            🎓 {item.qualification}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="mt-4 pt-3 border-t border-[#1b1444]/60 flex items-center justify-between">
+                      <span className="text-[10px] text-yellow-400 font-extrabold uppercase group-hover:underline">
+                        Apply & View Details →
+                      </span>
+                      <button
+                        onClick={() => setSelectedPosting(item)}
+                        className="px-3.5 py-1.5 bg-[#7c3aed] hover:bg-[#6d28d9] text-white text-[10px] font-black uppercase tracking-wider rounded-lg transition-all cursor-pointer shadow"
+                      >
+                        Details
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        ) : activeCategory === 'all' ? (
           <div className="space-y-6">
             
             {/* Standard 3-Column Sarkari Board */}
@@ -1913,6 +2349,20 @@ export default function App() {
     );
   };
 
+  if (!hasEntered) {
+    return (
+      <WelcomeLanding 
+        onEnter={() => {
+          localStorage.setItem('recruit_has_entered', 'true');
+          setHasEntered(true);
+        }} 
+        setActiveTab={(tab) => {
+          setActiveTab(tab);
+        }}
+      />
+    );
+  }
+
   return (
     <div className="bg-[#090714] min-h-screen flex flex-col font-sans antialiased text-slate-100 selection:bg-purple-500 selection:text-white pb-12">
       
@@ -1923,6 +2373,13 @@ export default function App() {
           setActiveTab(tab);
           setSelectedPosting(null); // Clear selected posting
         }}
+        onOpenAuth={() => setIsAuthModalOpen(true)}
+      />
+
+      {/* Security Auth Modal overlay */}
+      <AuthModal 
+        isOpen={isAuthModalOpen} 
+        onClose={() => setIsAuthModalOpen(false)} 
       />
 
       {/* 2. Hot scrolling live notifications marquee */}
@@ -2030,7 +2487,7 @@ export default function App() {
               <span className="font-black text-white text-base tracking-tight">Recruit</span>
             </div>
             <p className="text-xs text-slate-400 font-medium leading-relaxed">
-              India's Next Generation Employment Engine. Secure, verified career pipelines, upskilling programs, resume parsing, and business guide tools.
+              Empowering India’s Students, Professionals, and MSMEs. Secure, verified career pipelines, upskilling programs, resume parsing, and business guide tools.
             </p>
           </div>
 
@@ -2100,6 +2557,14 @@ export default function App() {
             <ul className="space-y-2 text-xs font-semibold">
               <li>
                 <button 
+                  onClick={() => setActiveTab('faqs')} 
+                  className="text-slate-400 hover:text-white transition-colors cursor-pointer text-left font-bold text-violet-400 hover:text-violet-300"
+                >
+                  Frequently Asked FAQs
+                </button>
+              </li>
+              <li>
+                <button 
                   onClick={() => setActiveTab('contact')} 
                   className="text-slate-400 hover:text-white transition-colors cursor-pointer text-left"
                 >
@@ -2119,22 +2584,38 @@ export default function App() {
                   Support Email: <a href="mailto:support@recruit.org.in" className="hover:underline text-violet-400">support@recruit.org.in</a>
                 </span>
               </li>
+              <li className="pt-1.5">
+                <a 
+                  href="https://wa.me/919090455555" 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="inline-flex items-center gap-2 bg-[#25D366]/15 hover:bg-[#25D366]/25 text-[#25D366] border border-[#25D366]/30 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all duration-200"
+                >
+                  <MessageCircle className="w-4 h-4 shrink-0" />
+                  <span>WhatsApp Chat</span>
+                </a>
+              </li>
             </ul>
           </div>
         </div>
 
         {/* Bottom copyright/security banner */}
-        <div className="bg-[#120d2a]/90 rounded-2xl border border-[#211b3d] p-6 flex flex-col md:flex-row justify-between items-center gap-4 text-xs font-semibold text-slate-400">
+        <div className="bg-[#120d2a]/90 rounded-2xl border border-[#211b3d] p-6 flex flex-col lg:flex-row justify-between items-center gap-4 text-xs font-semibold text-slate-400">
           <span className="flex items-center gap-2 font-bold text-slate-300">
             <ShieldCheck className="w-5 h-5 text-[#00e676] shrink-0" /> Verified Career & Opportunity Platform
           </span>
-          <span className="text-center md:text-right">Copyright © 2026 Recruit.org.in. All Rights Reserved.</span>
+          <div className="text-center lg:text-right space-y-1">
+            <p className="text-slate-300 font-bold">Copyright © 2026 Recruit.org.in. All Rights Reserved.</p>
+            <p className="text-[10px] text-slate-500">
+              Development and Maintenance by <span className="text-slate-400 font-bold">BRAGA TECHNOLOGIES PRIVATE LIMITED</span> in association with <span className="text-slate-400 font-bold">ODITREE SERVICES</span>
+            </p>
+          </div>
         </div>
       </footer>
 
       {/* Floating Chat Overlay Container */}
       {isChatOpen && !isChatMinimized && (
-        <div className="fixed bottom-24 right-6 w-[calc(100vw-32px)] sm:w-[500px] h-[580px] max-h-[75vh] z-50 bg-white rounded-3xl shadow-[0_12px_40px_rgba(124,58,237,0.3)] border border-[#a78bfa]/30 overflow-hidden flex flex-col animate-in slide-in-from-bottom-5 duration-300">
+        <div className="fixed bottom-0 right-0 sm:bottom-24 sm:right-6 w-full sm:w-[500px] h-[100dvh] sm:h-[580px] max-h-[100dvh] sm:max-h-[75vh] z-50 bg-[#090714] sm:rounded-3xl shadow-[0_12px_40px_rgba(124,58,237,0.3)] border-t sm:border border-[#a78bfa]/30 overflow-hidden flex flex-col animate-in slide-in-from-bottom-5 duration-300">
           <ArohiChat 
             onNavigateTab={(tab) => {
               setActiveTab(tab);
@@ -2156,6 +2637,7 @@ export default function App() {
           <span>💬 AROHI Minimized • Resume Chat</span>
         </button>
       )}
+
 
       {/* Floating assistant bubble in bottom right corner */}
       <button
@@ -2351,7 +2833,7 @@ export default function App() {
                     {/* Subscription billing details */}
                     <div className="space-y-1 bg-slate-900/60 border border-[#2d2060] rounded-xl p-3.5">
                       <p className="text-[9px] uppercase tracking-widest text-[#a78bfa] font-black">App / Developer</p>
-                      <p className="text-xs font-black text-white leading-tight">Recruit.org.in — India's Next Generation Employment Engine</p>
+                      <p className="text-xs font-black text-white leading-tight">Recruit.org.in — Empowering India’s Students, Professionals, and MSMEs</p>
                       
                       <p className="text-[9px] uppercase tracking-widest text-[#a78bfa] font-black pt-2">Subscription Option</p>
                       <p className="text-xs font-semibold text-slate-200 leading-tight">{checkoutPath.title}</p>

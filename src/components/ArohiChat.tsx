@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Send, Bot, User, Sparkles, Plus, RefreshCw, Trash2, Mic, Paperclip, CheckCircle, ArrowRight, Lightbulb, MapPin, Briefcase, Landmark, Award, Minus, X } from 'lucide-react';
+import ArohiAvatar from './ArohiAvatar';
 
 interface Message {
   id: string;
@@ -312,12 +313,7 @@ As **AROHI**, your opportunity advisor, let me recommend checking out our **Jobs
       <div className="bg-gradient-to-r from-[#120e2a] to-[#0a0715] border border-[#2d2163] rounded-3xl shadow-2xl p-5 flex flex-col sm:flex-row items-center justify-between gap-4 text-left transition-all duration-300">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 rounded-2xl shadow-lg shrink-0 border border-[#a78bfa]/30 relative overflow-hidden">
-            <img 
-              src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=120&auto=format&fit=crop" 
-              alt="Arohi" 
-              className="w-full h-full object-cover"
-              referrerPolicy="no-referrer"
-            />
+            <ArohiAvatar className="w-full h-full" />
             <span className="absolute top-0 right-0 w-3.5 h-3.5 bg-[#00e676] rounded-full border-2 border-[#120e2a] animate-pulse"></span>
           </div>
           <div>
@@ -341,7 +337,7 @@ As **AROHI**, your opportunity advisor, let me recommend checking out our **Jobs
   }
 
   return (
-    <div className="flex bg-[#090714] rounded-2xl border border-[#3b2b73]/50 shadow-2xl overflow-hidden h-[80vh]">
+    <div className="flex bg-[#090714] overflow-hidden h-full w-full">
       
       {/* LEFT SIDEBAR: Conversation History */}
       <aside className="hidden md:flex flex-col w-64 bg-[#0d091e] border-r border-[#2d2163] p-4 shrink-0">
@@ -407,15 +403,10 @@ As **AROHI**, your opportunity advisor, let me recommend checking out our **Jobs
       <div className="flex-1 flex flex-col min-w-0 bg-[#090714]">
         
         {/* Chat Title bar */}
-        <div className="bg-[#120d26] border-b border-[#2d2163] px-6 py-4 flex justify-between items-center">
+        <div className="bg-[#120d26] border-b border-[#2d2163] px-4 sm:px-6 py-3 sm:py-4 flex justify-between items-center">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl shadow-sm border border-[#3b2a80] overflow-hidden relative shrink-0">
-              <img 
-                src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=120&auto=format&fit=crop" 
-                alt="Arohi" 
-                className="w-full h-full object-cover"
-                referrerPolicy="no-referrer"
-              />
+              <ArohiAvatar className="w-full h-full" />
               <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-[#00e676] rounded-full border-2 border-[#120d26] animate-pulse"></span>
             </div>
             <div>
@@ -463,7 +454,7 @@ As **AROHI**, your opportunity advisor, let me recommend checking out our **Jobs
         </div>
 
         {/* Messages Scrolling Container */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-[#090714]">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 sm:space-y-6 bg-[#090714]">
           {messages.map((msg) => (
             <div
               key={msg.id}
@@ -471,12 +462,7 @@ As **AROHI**, your opportunity advisor, let me recommend checking out our **Jobs
             >
               {msg.role !== 'user' && (
                 <div className="w-9 h-9 rounded-xl overflow-hidden shadow-md border border-[#3b2a80] shrink-0">
-                  <img 
-                    src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=120&auto=format&fit=crop" 
-                    alt="Arohi" 
-                    className="w-full h-full object-cover"
-                    referrerPolicy="no-referrer"
-                  />
+                  <ArohiAvatar className="w-full h-full" />
                 </div>
               )}
 
@@ -505,12 +491,7 @@ As **AROHI**, your opportunity advisor, let me recommend checking out our **Jobs
           {isLoading && (
             <div className="flex gap-4 justify-start">
               <div className="w-9 h-9 rounded-xl overflow-hidden shrink-0 shadow-md border border-[#3b2a80]">
-                <img 
-                  src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=120&auto=format&fit=crop" 
-                  alt="Arohi" 
-                  className="w-full h-full object-cover"
-                  referrerPolicy="no-referrer"
-                />
+                <ArohiAvatar className="w-full h-full" />
               </div>
               <div className="bg-[#130f2c] border border-[#2b1f5c] max-w-[70%] rounded-2xl p-4 rounded-tl-none shadow-md text-sm text-slate-100">
                 <div className="flex items-center gap-2">
@@ -553,7 +534,7 @@ As **AROHI**, your opportunity advisor, let me recommend checking out our **Jobs
         </div>
 
         {/* Input box bottom bar */}
-        <div className="border-t border-[#231a4f] p-4 bg-[#120d26]">
+        <div className="border-t border-[#231a4f] p-3 sm:p-4 bg-[#120d26]">
           {/* Dynamic connected suggestion chips */}
           <div className="mb-3">
             <div className="flex gap-1.5 overflow-x-auto pb-1.5 select-none scrollbar-none">
@@ -606,10 +587,10 @@ As **AROHI**, your opportunity advisor, let me recommend checking out our **Jobs
             </div>
           )}
 
-          <div className="flex gap-2.5 items-center">
+          <div className="flex gap-1.5 sm:gap-2.5 items-center">
             {/* Attachment icon */}
-            <label className="p-3 bg-[#181236] hover:bg-[#241a4f] rounded-xl border border-[#3e2b85] text-slate-300 hover:text-white cursor-pointer shadow-sm transition-colors shrink-0">
-              <Paperclip className="w-4.5 h-4.5" />
+            <label className="p-2.5 sm:p-3 bg-[#181236] hover:bg-[#241a4f] rounded-xl border border-[#3e2b85] text-slate-300 hover:text-white cursor-pointer shadow-sm transition-colors shrink-0">
+              <Paperclip className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
               <input 
                 type="file" 
                 accept=".pdf,.docx,.txt,image/*" 
@@ -621,33 +602,33 @@ As **AROHI**, your opportunity advisor, let me recommend checking out our **Jobs
             {/* Voice input */}
             <button
               onClick={toggleRecording}
-              className={`p-3 rounded-xl border shadow-sm transition-colors shrink-0 cursor-pointer ${
+              className={`p-2.5 sm:p-3 rounded-xl border shadow-sm transition-colors shrink-0 cursor-pointer ${
                 recording 
                   ? 'bg-rose-600 text-white border-rose-500' 
                   : 'bg-[#181236] hover:bg-[#241a4f] border-[#3e2b85] text-slate-300 hover:text-white'
               }`}
               title="Speak with AROHI"
             >
-              <Mic className="w-4.5 h-4.5" />
+              <Mic className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
             </button>
 
             {/* Message input */}
             <input
               type="text"
-              placeholder="Ask AROHI for career suggestions, loans, scheme eligibility, resume help..."
+              placeholder="Ask AROHI anything..."
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyPress}
-              className="flex-1 bg-[#181236] border border-[#3e2b85] rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#7c3aed] text-white placeholder-slate-400 shadow-sm font-medium"
+              className="flex-1 min-w-0 bg-[#181236] border border-[#3e2b85] rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#7c3aed] text-white placeholder-slate-400 shadow-sm font-medium"
             />
 
             {/* Send button */}
             <button
               onClick={() => handleSendMessage()}
               disabled={(!input.trim() && !uploadedFileName) || isLoading}
-              className="p-3 bg-[#7c3aed] hover:bg-[#6d28d9] disabled:bg-[#1a1532] disabled:text-slate-500 text-white rounded-xl shadow-md cursor-pointer disabled:cursor-not-allowed transition-all shrink-0"
+              className="p-2.5 sm:p-3 bg-[#7c3aed] hover:bg-[#6d28d9] disabled:bg-[#1a1532] disabled:text-slate-500 text-white rounded-xl shadow-md cursor-pointer disabled:cursor-not-allowed transition-all shrink-0 flex items-center justify-center"
             >
-              <Send className="w-4.5 h-4.5" />
+              <Send className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
             </button>
           </div>
           <div className="mt-2 text-center text-[10px] text-slate-400 font-medium">

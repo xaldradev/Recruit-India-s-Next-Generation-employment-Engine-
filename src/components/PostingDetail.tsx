@@ -1,6 +1,134 @@
-import { useState, useRef, ChangeEvent, FormEvent } from 'react';
-import { ArrowLeft, Printer, Download, CheckCircle2, ShieldCheck, Upload, AlertCircle, FileText, Globe, Calendar, CreditCard, User, Landmark, Sparkles } from 'lucide-react';
+import { useState, useRef, ChangeEvent, FormEvent, useEffect } from 'react';
+import { ArrowLeft, Printer, Download, CheckCircle2, ShieldCheck, Upload, AlertCircle, FileText, Globe, Calendar, CreditCard, User, Landmark, Sparkles, Share2, IndianRupee, TrendingUp, Coins } from 'lucide-react';
 import { Posting, Application } from '../types';
+
+export function getEstimatedSalary(posting: Posting) {
+  const title = (posting.title || '').toLowerCase();
+  const shortInfo = (posting.shortInfo || '').toLowerCase();
+  const org = (posting.organization || '').toLowerCase();
+  const dept = (posting.department || '').toLowerCase();
+  
+  // Combine post names for matching
+  const postNames = (posting.vacancies || []).map(v => (v.postName || '').toLowerCase());
+  const allText = `${title} ${shortInfo} ${org} ${dept} ${postNames.join(' ')}`;
+
+  let min = 25000;
+  let max = 45000;
+  let level = "Level 3";
+  let type = posting.jobType === 'private' ? 'Private Industry Standard' : '7th CPC Pay Matrix';
+  let allowances = posting.jobType === 'private' ? 'Includes PF, ESIC & Performance Bonus' : 'Plus DA, HRA, Transport Allowance & Medical benefits';
+  let basis = 'Typical entry-level role standards';
+
+  if (allText.includes('mts') || allText.includes('multi tasking') || allText.includes('peon') || allText.includes('attendant') || allText.includes('helper') || allText.includes('safaiwala') || allText.includes('group d') || allText.includes('chowkidar')) {
+    min = 18000;
+    max = 28000;
+    level = "Level 1";
+    basis = "7th Central Pay Commission Level-1 Pay Scale for Group 'C' Central Government staff.";
+  } else if (allText.includes('cgl') || allText.includes('inspector') || allText.includes('officer') || allText.includes('sub inspector') || allText.includes('si ') || allText.includes('assistant section officer') || allText.includes('aso') || allText.includes('superintendent')) {
+    min = 44900;
+    max = 142400;
+    level = "Level 7";
+    basis = "7th Central Pay Commission Level-7 Pay Scale for Group 'B' Gazetted/Non-Gazetted officers.";
+  } else if (allText.includes('chsl') || allText.includes('clerk') || allText.includes('ldc') || allText.includes('typist') || allText.includes('data entry') || allText.includes('deo') || allText.includes('junior assistant') || allText.includes('clerical')) {
+    min = 19900;
+    max = 63200;
+    level = "Level 2";
+    basis = "7th Central Pay Commission Level-2 Pay Scale for Lower Division Clerks & Assistant staff.";
+  } else if (allText.includes('constable') || allText.includes('police') || allText.includes('guard') || allText.includes('soldier') || allText.includes('gd') || allText.includes('security')) {
+    min = 21700;
+    max = 69100;
+    level = "Level 3";
+    basis = "7th Central Pay Commission Level-3 Pay Scale for Constables & Central Armed Police Forces (CAPFs).";
+  } else if (allText.includes('stenographer') || allText.includes('steno')) {
+    min = 25500;
+    max = 81100;
+    level = "Level 4";
+    basis = "7th Central Pay Commission Level-4 Pay Scale for Stenographers Grade 'D'.";
+  } else if (allText.includes('assistant engineer') || allText.includes('ae ') || allText.includes('scientist') || allText.includes('lecturer') || allText.includes('assistant professor') || allText.includes('commissioned officer')) {
+    min = 56100;
+    max = 177500;
+    level = "Level 10";
+    basis = "7th Central Pay Commission Level-10 Entry Scale for Group 'A' Gazetted / Class-1 services.";
+  } else if (allText.includes('junior engineer') || allText.includes('je ') || allText.includes('section engineer') || allText.includes('sub engineer')) {
+    min = 35400;
+    max = 112400;
+    level = "Level 6";
+    basis = "7th Central Pay Commission Level-6 Pay Scale for Technical Junior Engineers.";
+  } else if (allText.includes('teacher') || allText.includes('tgt') || allText.includes('pgt') || allText.includes('prt') || allText.includes('educator') || allText.includes('principal')) {
+    if (allText.includes('pgt') || allText.includes('principal')) {
+      min = 47600;
+      max = 151100;
+      level = "Level 8";
+      basis = "7th Central Pay Commission Level-8 Pay Scale for Senior Post Graduate school teachers & lecturers.";
+    } else {
+      min = 35400;
+      max = 112400;
+      level = "Level 6";
+      basis = "7th Central Pay Commission Level-6 trained graduate teacher (TGT) scales.";
+    }
+  } else if (allText.includes('nurse') || allText.includes('medical officer') || allText.includes('pharmacist') || allText.includes('lab technician') || allText.includes('doctor')) {
+    min = 29200;
+    max = 92300;
+    level = "Level 5";
+    basis = "7th Central Pay Commission Level-5 standard medical & health services department scales.";
+  } else if (allText.includes('bank po') || allText.includes('probationary officer') || allText.includes('management trainee') || allText.includes('scale i')) {
+    min = 41960;
+    max = 64000;
+    level = "Officer Scale I";
+    type = "IBA Bank Pay Scales";
+    allowances = "Plus DA, HRA, Special Allowance, Leased Accommodation & perks";
+    basis = "Indian Banks' Association (IBA) 12th Bipartite Settlement scales for Bank Probationary Officers.";
+  } else if (allText.includes('bank clerk') || allText.includes('single window') || allText.includes('assistant (multipurpose)') || allText.includes('clerical cadre')) {
+    min = 19900;
+    max = 47920;
+    level = "Clerical Cadre";
+    type = "IBA Bank Pay Scales";
+    allowances = "Plus DA, HRA, Transport Allowance, medical & local benefits";
+    basis = "Indian Banks' Association (IBA) 12th Bipartite Settlement scales for public sector Bank Clerks.";
+  } else if (allText.includes('driver')) {
+    min = 19900;
+    max = 35000;
+    level = "Level 2 / Standard";
+    basis = "7th Central Pay Commission Level-2 pay scale or public department heavy/light motor vehicle driver benchmarks.";
+  } else if (posting.jobType === 'private') {
+    if (allText.includes('developer') || allText.includes('software') || allText.includes('engineer') || allText.includes('it ') || allText.includes('tech') || allText.includes('programmer')) {
+      min = 35000;
+      max = 85000;
+      level = "Grade A Technical";
+      basis = "Average standard entry to mid-level IT/Software engineer salaries in metropolitan Indian tech hubs.";
+    } else if (allText.includes('sales') || allText.includes('marketing') || allText.includes('business development') || allText.includes('bde') || allText.includes('executive')) {
+      min = 20000;
+      max = 45000;
+      level = "Grade B Business";
+      allowances = "Plus monthly/quarterly target performance-linked incentives & travel DA";
+      basis = "Private corporate average CTC package benchmarks for business development and sales roles.";
+    } else {
+      min = 18000;
+      max = 40000;
+      level = "Grade C General";
+      basis = "Indian corporate private sector average starting salaries for corresponding roles.";
+    }
+  }
+
+  // Helper to format currency
+  const formatSalary = (val: number) => {
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR',
+      maximumFractionDigits: 0
+    }).format(val);
+  };
+
+  return {
+    range: `${formatSalary(min)} – ${formatSalary(max)}`,
+    minVal: formatSalary(min),
+    maxVal: formatSalary(max),
+    level,
+    type,
+    allowances,
+    basis
+  };
+}
 
 interface PostingDetailProps {
   posting: Posting;
@@ -9,7 +137,13 @@ interface PostingDetailProps {
 }
 
 export default function PostingDetail({ posting, onBack, onAddApplication }: PostingDetailProps) {
+  const salaryData = getEstimatedSalary(posting);
   const [activeTab, setActiveTab] = useState<'details' | 'apply' | 'notification' | 'syllabus'>('details');
+  
+  // Scroll smoothly to the top of the container immediately upon loading a job
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [posting]);
   
   // Apply form state
   const [candidateName, setCandidateName] = useState('');
@@ -128,18 +262,70 @@ export default function PostingDetail({ posting, onBack, onAddApplication }: Pos
     }
   };
 
+  const [copied, setCopied] = useState(false);
+
+  const handleShare = async () => {
+    const shareData = {
+      title: posting.title,
+      text: `Check out this job opportunity: ${posting.title} at ${posting.organization}`,
+      url: window.location.href,
+    };
+
+    if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
+      try {
+        await navigator.share(shareData);
+      } catch (err) {
+        console.log('Error sharing:', err);
+      }
+    } else {
+      try {
+        await navigator.clipboard.writeText(window.location.href);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      } catch (err) {
+        console.error('Failed to copy text:', err);
+      }
+    }
+  };
+
   return (
     <div className="bg-slate-50 min-h-screen py-6 px-4">
       <div className="max-w-6xl mx-auto">
         
-        {/* Back Button and Quick Info Banner */}
-        <button
-          onClick={onBack}
-          className="mb-5 inline-flex items-center gap-2 text-rose-600 hover:text-rose-700 font-bold text-sm bg-white border border-rose-200 px-4 py-2 rounded-lg shadow-sm hover:shadow transition-all cursor-pointer"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          <span>Back to Updates Board</span>
-        </button>
+        {/* Back Button and Print/Share buttons */}
+        <div className="mb-5 flex flex-wrap justify-between items-center gap-3 print:hidden">
+          <button
+            onClick={onBack}
+            className="inline-flex items-center gap-2 text-rose-600 hover:text-rose-700 font-bold text-sm bg-white border border-rose-200 px-4 py-2 rounded-lg shadow-sm hover:shadow transition-all cursor-pointer"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>Back to Updates Board</span>
+          </button>
+
+          <div className="flex gap-2">
+            <button
+              onClick={() => window.print()}
+              className="inline-flex items-center gap-2 text-slate-700 hover:text-rose-600 hover:border-rose-300 font-bold text-sm bg-white border border-slate-200 px-4 py-2 rounded-lg shadow-sm hover:shadow transition-all cursor-pointer"
+              id="print-posting-btn"
+            >
+              <Printer className="w-4 h-4 text-rose-600" />
+              <span>Print Posting Details</span>
+            </button>
+
+            <button
+              onClick={handleShare}
+              className={`inline-flex items-center gap-2 font-bold text-sm bg-white border px-4 py-2 rounded-lg shadow-sm hover:shadow transition-all cursor-pointer ${
+                copied 
+                  ? 'text-emerald-600 border-emerald-200 bg-emerald-50/50' 
+                  : 'text-slate-700 hover:text-rose-600 hover:border-rose-300 border-slate-200'
+              }`}
+              id="share-posting-btn"
+            >
+              <Share2 className={`w-4 h-4 ${copied ? 'text-emerald-600 animate-bounce' : 'text-rose-600'}`} />
+              <span>{copied ? 'Link Copied!' : 'Share'}</span>
+            </button>
+          </div>
+        </div>
 
         {/* Header Block of Posting */}
         <div className="bg-white rounded-xl shadow-md border-l-8 border-rose-600 p-6 mb-6">
@@ -157,6 +343,10 @@ export default function PostingDetail({ posting, onBack, onAddApplication }: Pos
                     #{t}
                   </span>
                 ))}
+              </div>
+              <div className="mt-3 flex items-center gap-1.5 bg-emerald-50 border border-emerald-200 rounded-lg py-1 px-2.5 w-fit text-[11px] font-bold text-emerald-800 shadow-sm animate-[pulse_3s_infinite]">
+                <Coins className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                <span>Estimated Pay Range: <span className="text-emerald-950 font-black">{salaryData.range}</span>/mo</span>
               </div>
             </div>
             <div className="text-right bg-slate-50 p-3 rounded-lg border border-slate-100 min-w-[150px]">
@@ -176,7 +366,7 @@ export default function PostingDetail({ posting, onBack, onAddApplication }: Pos
         </div>
 
         {/* Tab Controls */}
-        <div className="flex border-b border-slate-200 bg-white rounded-t-xl overflow-hidden shadow-sm">
+        <div className="flex border-b border-slate-200 bg-white rounded-t-xl overflow-hidden shadow-sm print:hidden">
           <button
             onClick={() => setActiveTab('details')}
             className={`flex-1 md:flex-none px-6 py-3.5 text-sm font-bold tracking-wide border-b-2 transition-all cursor-pointer ${
@@ -316,6 +506,37 @@ export default function PostingDetail({ posting, onBack, onAddApplication }: Pos
                           <span className="text-slate-600 leading-normal text-[11px] font-normal">{posting.ageLimit.relaxationInfo}</span>
                         </div>
                       </div>
+                    </td>
+                  </tr>
+
+                  {/* Estimated Pay Scale & Salary Range (Industry standard) */}
+                  <tr className="bg-emerald-50/20 align-top border-b border-slate-200">
+                    <td colSpan={2} className="p-4">
+                      <div className="flex items-center gap-2 mb-2 text-emerald-800 font-extrabold uppercase tracking-wide text-xs">
+                        <TrendingUp className="w-4 h-4 text-emerald-700" />
+                        <span>Estimated Industry Pay Scale & Benefits</span>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-xs font-semibold mt-2.5">
+                        <div className="bg-white p-3 rounded-lg border border-emerald-100 shadow-sm">
+                          <span className="text-slate-400 block text-[10px] uppercase font-bold">Estimated Monthly Scale</span>
+                          <span className="text-emerald-700 text-sm font-black tracking-tight flex items-center gap-1 mt-0.5">
+                            <IndianRupee className="w-3.5 h-3.5" />
+                            {salaryData.range}
+                          </span>
+                        </div>
+                        <div className="bg-white p-3 rounded-lg border border-emerald-100 shadow-sm">
+                          <span className="text-slate-400 block text-[10px] uppercase font-bold">Pay Matrix Grade</span>
+                          <span className="text-slate-800 text-xs font-extrabold block mt-0.5">{salaryData.level}</span>
+                          <span className="text-[10px] text-slate-400 font-normal">({salaryData.type})</span>
+                        </div>
+                        <div className="bg-white p-3 rounded-lg border border-emerald-100 shadow-sm md:col-span-2">
+                          <span className="text-slate-400 block text-[10px] uppercase font-bold">Allowances & Core Benefits</span>
+                          <span className="text-slate-600 leading-normal text-[11px] font-medium block mt-0.5">{salaryData.allowances}</span>
+                        </div>
+                      </div>
+                      <p className="text-[11px] text-slate-500 mt-2.5 leading-relaxed bg-white/60 p-2.5 rounded border border-slate-100">
+                        <strong>Estimation Basis:</strong> {salaryData.basis} Note that these are industry & commission standards. The actual in-hand salary may vary slightly depending on posting location, HRA slab (X, Y, Z cities), and pension deductions.
+                      </p>
                     </td>
                   </tr>
 

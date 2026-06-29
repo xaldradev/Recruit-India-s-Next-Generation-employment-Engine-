@@ -36,7 +36,7 @@ export default function Smooth3DShowcase({ setActiveTab, setSelectedPosting }: S
     {
       id: 'jobs',
       title: 'SSC MTS & Railways',
-      subtitle: 'Next-Gen Employment Engine',
+      subtitle: 'Students, Professionals & MSMEs',
       desc: 'Apply directly with customized automated form checks, reservation calculators, and key date trackers.',
       tag: '🔥 HOT JOB ALERT',
       icon: Briefcase,
