@@ -9,9 +9,10 @@ interface HeaderProps {
   onSearchChange?: (query: string) => void;
   searchQuery?: string;
   onOpenAuth: () => void;
+  onRevisitWelcome?: () => void;
 }
 
-export default function Header({ activeTab, onTabChange, onSearchChange, searchQuery, onOpenAuth }: HeaderProps) {
+export default function Header({ activeTab, onTabChange, onSearchChange, searchQuery, onOpenAuth, onRevisitWelcome }: HeaderProps) {
   const { user, userData, signOutUser } = useAuth();
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -131,7 +132,18 @@ export default function Header({ activeTab, onTabChange, onSearchChange, searchQ
 
         {/* Right Side: CTA and Mobile toggle */}
         <div className="flex items-center gap-2.5">
-          
+
+          {onRevisitWelcome && (
+            <button
+              onClick={onRevisitWelcome}
+              className="hidden md:flex items-center gap-1.5 px-3 py-1.5 bg-purple-950/40 border border-purple-500/35 hover:border-purple-400/70 rounded-full cursor-pointer hover:bg-purple-900/30 text-[#bdaeff] hover:text-white transition-all text-[11px] font-bold"
+              title="Return to the 3D Welcome Intro screen"
+            >
+              <Sparkles className="w-3 h-3 text-amber-300 animate-pulse" />
+              <span>3D Welcome Intro</span>
+            </button>
+          )}
+
           {user ? (
             <div className="hidden sm:flex items-center gap-3">
               {/* Account details badge */}
@@ -343,6 +355,21 @@ export default function Header({ activeTab, onTabChange, onSearchChange, searchQ
                   className="pt-4 border-t border-purple-950/40 relative z-10 mt-auto"
                   style={{ transform: 'translateZ(40px)' }}
                 >
+                  {onRevisitWelcome && (
+                    <motion.button
+                      whileHover={{ scale: 1.02, backgroundColor: 'rgba(124, 58, 237, 0.15)', borderColor: 'rgba(124, 58, 237, 0.4)' }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => {
+                        onRevisitWelcome();
+                        setMobileMenuOpen(false);
+                      }}
+                      className="w-full text-center bg-purple-950/30 border border-purple-500/25 text-[#c8bdfd] py-3 rounded-2xl text-xs font-black uppercase tracking-wider cursor-pointer mb-3 transition-all flex items-center justify-center gap-1.5"
+                    >
+                      <Sparkles className="w-3.5 h-3.5 text-amber-300 animate-pulse" />
+                      <span>3D Welcome Intro</span>
+                    </motion.button>
+                  )}
+
                   {user ? (
                     <div className="flex flex-col gap-3">
                       <div className="flex items-center gap-3 px-4 py-3 bg-[#130b2c]/80 border border-purple-950/40 rounded-2xl shadow-inner">

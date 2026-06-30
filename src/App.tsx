@@ -150,9 +150,7 @@ const INITIAL_REVIEWS: Review[] = [
 export default function App() {
   const { user, userData, updateApplications } = useAuth();
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-  const [hasEntered, setHasEntered] = useState(() => {
-    return localStorage.getItem('recruit_has_entered') === 'true';
-  });
+  const [hasEntered, setHasEntered] = useState(false);
 
   const [userName, setUserName] = useState(() => {
     return localStorage.getItem('recruit_user_name') || 'Honored Guest';
@@ -2374,6 +2372,10 @@ export default function App() {
           setSelectedPosting(null); // Clear selected posting
         }}
         onOpenAuth={() => setIsAuthModalOpen(true)}
+        onRevisitWelcome={() => {
+          localStorage.removeItem('recruit_has_entered');
+          setHasEntered(false);
+        }}
       />
 
       {/* Security Auth Modal overlay */}

@@ -1395,10 +1395,10 @@ export default function SchoolSyllabusPage() {
           <div className="flex flex-col md:flex-row justify-between items-center gap-4 border-b border-[#211b3d] pb-6">
             
             {/* Board Selector Tabs */}
-            <div className="flex bg-[#070510] rounded-2xl p-1.5 border border-[#211b3d] w-full md:w-auto">
+            <div className="grid grid-cols-2 md:flex bg-[#070510] rounded-2xl p-1.5 border border-[#211b3d] w-full md:w-auto gap-1.5 md:gap-0">
               <button
                 onClick={() => setActiveBoard('odia')}
-                className={`flex-1 md:flex-none px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-2 ${
+                className={`flex-1 md:flex-none px-3 md:px-5 py-2.5 rounded-xl text-[10px] sm:text-xs font-black uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-1.5 sm:gap-2 ${
                   activeBoard === 'odia'
                     ? 'bg-[#7c3aed] text-white shadow-lg shadow-purple-900/40'
                     : 'text-slate-400 hover:text-white'
@@ -1409,7 +1409,7 @@ export default function SchoolSyllabusPage() {
               </button>
               <button
                 onClick={() => setActiveBoard('cbse')}
-                className={`flex-1 md:flex-none px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-2 ${
+                className={`flex-1 md:flex-none px-3 md:px-5 py-2.5 rounded-xl text-[10px] sm:text-xs font-black uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-1.5 sm:gap-2 ${
                   activeBoard === 'cbse'
                     ? 'bg-[#7c3aed] text-white shadow-lg shadow-purple-900/40'
                     : 'text-slate-400 hover:text-white'
@@ -1420,7 +1420,7 @@ export default function SchoolSyllabusPage() {
               </button>
               <button
                 onClick={() => setActiveBoard('icse')}
-                className={`flex-1 md:flex-none px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-2 ${
+                className={`flex-1 md:flex-none px-3 md:px-5 py-2.5 rounded-xl text-[10px] sm:text-xs font-black uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-1.5 sm:gap-2 ${
                   activeBoard === 'icse'
                     ? 'bg-[#7c3aed] text-white shadow-lg shadow-purple-900/40'
                     : 'text-slate-400 hover:text-white'
@@ -1431,14 +1431,15 @@ export default function SchoolSyllabusPage() {
               </button>
               <button
                 onClick={() => setActiveBoard('china2070')}
-                className={`flex-1 md:flex-none px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-2 relative ${
+                className={`flex-1 md:flex-none px-3 md:px-5 py-2.5 rounded-xl text-[10px] sm:text-xs font-black uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-1.5 sm:gap-2 relative ${
                   activeBoard === 'china2070'
                     ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-lg shadow-emerald-900/40 border border-emerald-400'
                     : 'text-emerald-400/90 hover:text-white border border-emerald-500/20 bg-emerald-500/5'
                 }`}
               >
                 <Bot className="w-3.5 h-3.5 animate-pulse" />
-                <span>Arohi 2070 Super Elite</span>
+                <span className="hidden sm:inline">Arohi 2070 Super Elite</span>
+                <span className="sm:hidden">2070 Elite</span>
                 <span className="absolute -top-1.5 -right-1.5 bg-rose-500 text-white font-bold text-[7px] uppercase px-1 py-0.5 rounded-full leading-none scale-90">
                   NEW
                 </span>

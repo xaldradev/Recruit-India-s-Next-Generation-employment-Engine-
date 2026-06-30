@@ -161,6 +161,19 @@ export default function WelcomeLanding({ onEnter, setActiveTab }: WelcomeLanding
     }
   ];
 
+  const floatingAnims = [
+    { x: [0, -15, 10, -5, 0], y: [0, 20, -15, 12, 0], rotate: [0, 3, -4, 2, 0], duration: 8 },
+    { x: [0, 12, -18, 8, 0], y: [0, -15, 15, -10, 0], rotate: [0, -3, 4, -2, 0], duration: 9 },
+    { x: [0, -8, 15, -12, 0], y: [0, 18, -12, 15, 0], rotate: [0, 2, -3, 3, 0], duration: 10 },
+    { x: [0, 15, -10, 14, 0], y: [0, -20, 18, -8, 0], rotate: [0, -4, 2, -3, 0], duration: 11 },
+    { x: [0, -12, 12, -15, 0], y: [0, 14, -20, 10, 0], rotate: [0, 3, -2, 4, 0], duration: 8.5 },
+    { x: [0, 18, -15, 8, 0], y: [0, -12, 14, -18, 0], rotate: [0, -2, 3, -1, 0], duration: 9.5 },
+    { x: [0, -10, 18, -12, 0], y: [0, 15, -15, 8, 0], rotate: [0, 4, -3, 2, 0], duration: 10.5 },
+    { x: [0, 14, -8, 15, 0], y: [0, -18, 12, -14, 0], rotate: [0, -3, 4, -2, 0], duration: 7.5 },
+    { x: [0, -16, 12, -10, 0], y: [0, 12, -18, 15, 0], rotate: [0, 2, -4, 3, 0], duration: 11.5 },
+    { x: [0, 10, -14, 12, 0], y: [0, -15, 20, -12, 0], rotate: [0, -4, 3, -3, 0], duration: 8.8 }
+  ];
+
   return (
     <div className="relative w-full h-screen min-h-[580px] sm:min-h-[640px] bg-[#020208] text-white flex flex-col justify-between overflow-hidden font-sans select-none">
       
@@ -184,28 +197,48 @@ export default function WelcomeLanding({ onEnter, setActiveTab }: WelcomeLanding
         <div className="absolute inset-0 pointer-events-none z-0">
           {categories.map((cat, idx) => {
             const IconComponent = cat.icon;
+            const anim = floatingAnims[idx % floatingAnims.length];
             return (
               <motion.button
                 key={cat.id}
                 onClick={() => handleBadgeClick(cat.tabId)}
-                className={`absolute pointer-events-auto bg-gradient-to-br ${cat.color} border ${cat.borderColor} ${cat.glow} px-1.5 py-1 sm:px-3 sm:py-2 md:px-4 md:py-2.5 xl:px-5 xl:py-3 rounded-lg sm:rounded-xl md:rounded-2xl flex items-center gap-1 sm:gap-2.5 backdrop-blur-md transition-all duration-300 cursor-pointer hover:scale-105 active:scale-95 group text-left ${cat.positionClasses}`}
+                className={`absolute pointer-events-auto bg-gradient-to-br ${cat.color} border ${cat.borderColor} ${cat.glow} px-3 py-2 sm:px-4.5 sm:py-3 md:px-5.5 md:py-4 xl:px-6 xl:py-4.5 rounded-xl sm:rounded-2xl md:rounded-3xl flex items-center gap-1.5 sm:gap-3 backdrop-blur-md transition-all duration-300 cursor-pointer hover:scale-110 active:scale-95 group text-left ${cat.positionClasses}`}
                 style={{
                   transform: `perspective(1000px) ${cat.tilt}`
                 }}
-                initial={{ y: 0 }}
-                animate={{ y: [0, -6, 0] }}
+                initial={{ opacity: 0, scale: 0 }}
+                animate={{ 
+                  opacity: 1, 
+                  scale: 1, 
+                  x: anim.x,
+                  y: anim.y,
+                  rotate: anim.rotate
+                }}
                 transition={{
-                  duration: 4 + (idx % 3),
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                  delay: idx * 0.25
+                  opacity: { duration: 0.6, delay: idx * 0.08 + 0.15 },
+                  scale: { duration: 0.6, delay: idx * 0.08 + 0.15 },
+                  x: {
+                    duration: anim.duration,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                  },
+                  y: {
+                    duration: anim.duration,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                  },
+                  rotate: {
+                    duration: anim.duration,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                  }
                 }}
               >
-                <div className={`p-1 sm:p-1.5 md:p-2 rounded-md sm:rounded-xl bg-black/40 border border-white/10 ${cat.iconColor} shrink-0 shadow-inner`}>
-                  <IconComponent className="w-2.5 h-2.5 sm:w-4 sm:h-4 md:w-4.5 md:h-4.5 group-hover:animate-pulse" />
+                <div className={`p-1.5 sm:p-2 md:p-2.5 rounded-lg sm:rounded-2xl bg-black/40 border border-white/10 ${cat.iconColor} shrink-0 shadow-inner`}>
+                  <IconComponent className="w-3 sm:w-4.5 md:w-5 md:h-5 sm:h-4.5 h-3 group-hover:scale-110 transition-transform duration-300 group-hover:animate-pulse" />
                 </div>
                 <div>
-                  <span className={`text-[6px] sm:text-[9px] md:text-[10px] xl:text-xs font-black uppercase tracking-wider sm:tracking-widest ${cat.textColor} whitespace-nowrap sm:whitespace-normal sm:max-w-[100px] md:max-w-[120px] xl:max-w-[140px] leading-tight block`}>
+                  <span className={`text-[9px] sm:text-xs md:text-sm xl:text-base font-black uppercase tracking-wider sm:tracking-widest ${cat.textColor} whitespace-nowrap sm:whitespace-normal sm:max-w-[120px] md:max-w-[150px] xl:max-w-[180px] leading-tight block`}>
                     {cat.title}
                   </span>
                 </div>
@@ -241,27 +274,52 @@ export default function WelcomeLanding({ onEnter, setActiveTab }: WelcomeLanding
 
           {/* Texts */}
           <div className="space-y-1 sm:space-y-2">
-            <span className="text-[8px] sm:text-xs font-bold tracking-[0.35em] text-slate-400 uppercase block">
+            <motion.span 
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.35, ease: "easeOut" }}
+              className="text-[8px] sm:text-xs font-bold tracking-[0.35em] text-slate-400 uppercase block"
+            >
               W E L C O M E &nbsp; T O
-            </span>
+            </motion.span>
             
-            <h1 className="text-4xl sm:text-7xl xl:text-8xl font-black tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-[#2dd4bf] via-[#3b82f6] to-[#ec4899] drop-shadow-[0_0_35px_rgba(59,130,246,0.25)] select-none uppercase leading-none font-sans">
+            <motion.h1 
+              initial={{ opacity: 0, y: 25 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.45, ease: "easeOut" }}
+              className="text-4xl sm:text-7xl xl:text-8xl font-black tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-[#2dd4bf] via-[#3b82f6] to-[#ec4899] drop-shadow-[0_0_35px_rgba(59,130,246,0.25)] select-none uppercase leading-none font-sans"
+            >
               Recruit
-            </h1>
+            </motion.h1>
 
-            <span className="text-[8px] sm:text-[11px] font-black tracking-[0.25em] text-slate-400 uppercase block pt-0.5">
+            <motion.span 
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.55, ease: "easeOut" }}
+              className="text-[8px] sm:text-[11px] font-black tracking-[0.25em] text-slate-400 uppercase block pt-0.5"
+            >
               Dream &bull; Prepare &bull; Achieve
-            </span>
+            </motion.span>
           </div>
 
-          <p className="text-[11px] sm:text-sm text-slate-200 leading-relaxed font-medium max-w-xs sm:max-w-md mx-auto">
+          <motion.p 
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.65, ease: "easeOut" }}
+            className="text-[11px] sm:text-sm text-slate-200 leading-relaxed font-medium max-w-xs sm:max-w-md mx-auto"
+          >
             Your AI-powered career partner.<br />
             Find jobs, learn skills, get hired —<br />
             all in one intelligent platform.
-          </p>
+          </motion.p>
 
           {/* 3D Circular Pedestal Stage */}
-          <div className="relative w-48 h-16 sm:w-64 sm:h-20 flex items-center justify-center my-2 sm:my-4 preserve-3d">
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.85, y: 10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.75, ease: "easeOut" }}
+            className="relative w-48 h-16 sm:w-64 sm:h-20 flex items-center justify-center my-2 sm:my-4 preserve-3d"
+          >
             {/* Multiple nested glow rings representing 3D platform */}
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-40 h-10 sm:w-48 sm:h-12 bg-[#101438] border-2 border-blue-500/30 rounded-full shadow-[0_0_30px_rgba(59,130,246,0.25)] transform -rotate-x-12 scale-100 flex items-center justify-center">
               {/* Inner deep spotlight ring */}
@@ -273,10 +331,15 @@ export default function WelcomeLanding({ onEnter, setActiveTab }: WelcomeLanding
 
             {/* Firing Light Particles up from the podium */}
             <div className="absolute -top-10 w-12 h-16 bg-gradient-to-t from-blue-500/20 to-transparent blur-md rounded-full animate-pulse"></div>
-          </div>
+          </motion.div>
 
           {/* Main CTA Enter Button */}
-          <div className="pt-1">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.85, ease: "easeOut" }}
+            className="pt-1"
+          >
             <motion.button
               onClick={onEnter}
               whileHover={{ scale: 1.05 }}
@@ -286,11 +349,16 @@ export default function WelcomeLanding({ onEnter, setActiveTab }: WelcomeLanding
               <span>Enter The Journey</span>
               <ArrowRight className="w-3.5 h-3.5 animate-bounce" style={{ animationDuration: '2.5s' }} />
             </motion.button>
-          </div>
+          </motion.div>
 
-          <p className="text-[10px] text-slate-400 font-semibold italic">
+          <motion.p 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5, delay: 1.0 }}
+            className="text-[10px] text-slate-400 font-semibold italic"
+          >
             Let's build your future, together.
-          </p>
+          </motion.p>
         </div>
 
       </div>
@@ -299,7 +367,12 @@ export default function WelcomeLanding({ onEnter, setActiveTab }: WelcomeLanding
       <div className="w-full max-w-7xl mx-auto px-4 pb-4 sm:pb-6 z-10 flex flex-col items-center gap-3 sm:gap-4 shrink-0">
         
         {/* Arohi is Online Active Banner */}
-        <div className="bg-gradient-to-r from-[#0d1527] via-[#091e2b] to-[#0d1527] border border-emerald-950/40 px-4 py-2.5 sm:px-6 sm:py-3.5 rounded-2xl sm:rounded-3xl shadow-xl flex items-center justify-between gap-4 max-w-sm sm:max-w-lg w-full">
+        <motion.div 
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 1.1, ease: "easeOut" }}
+          className="bg-gradient-to-r from-[#0d1527] via-[#091e2b] to-[#0d1527] border border-emerald-950/40 px-4 py-2.5 sm:px-6 sm:py-3.5 rounded-2xl sm:rounded-3xl shadow-xl flex items-center justify-between gap-4 max-w-sm sm:max-w-lg w-full"
+        >
           <div className="flex items-center gap-2 sm:gap-3">
             <span className="relative flex h-2.5 w-2.5 shrink-0">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
@@ -321,10 +394,15 @@ export default function WelcomeLanding({ onEnter, setActiveTab }: WelcomeLanding
           >
             <MessageSquare className="w-3.5 h-3.5" />
           </button>
-        </div>
+        </motion.div>
 
         {/* Legal brand footer text */}
-        <div className="w-full border-t border-slate-900/50 pt-3 flex flex-col md:flex-row items-center justify-between gap-2 text-[8px] sm:text-[10px] text-slate-400 font-extrabold uppercase tracking-widest">
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.8, delay: 1.25, ease: "easeOut" }}
+          className="w-full border-t border-slate-900/50 pt-3 flex flex-col md:flex-row items-center justify-between gap-2 text-[8px] sm:text-[10px] text-slate-400 font-extrabold uppercase tracking-widest"
+        >
           <span className="flex items-center gap-1">
             RECRUIT.ORG.IN &copy; {new Date().getFullYear()} &bull; Empowering Careers Across India
           </span>
@@ -341,7 +419,7 @@ export default function WelcomeLanding({ onEnter, setActiveTab }: WelcomeLanding
             <span>&bull;</span>
             <button onClick={() => handleBadgeClick('business')} className="hover:text-teal-400 transition-colors cursor-pointer">Career Guidance</button>
           </div>
-        </div>
+        </motion.div>
 
       </div>
 
